@@ -8,7 +8,7 @@ setup(
         author_email='nbwang22@gmail.com',
         license='MIT',
         packages=['keyence_file_management'],
-        install_requires=[],
+        install_requires=['pyyaml'],
         zip_safe=True,
         entry_points={
         "console_scripts": [

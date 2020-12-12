@@ -14,9 +14,9 @@ import re
 def entrypoint():
     print("hello world")
 
-    # source_dir = '/Users/Nathan/OneDrive\ -\ Massachusetts\ Institute\ of\ Technology/Documents\ -\ GallowayLab/instruments/data/keyence/Nathan/test/'
-
-    # sp_source = '/2020.10.24.Hb9GFP.pPhage-SlowFT'
+    source_dir = '/Users/Nathan/OneDrive\ -\ Massachusetts\ Institute\ of\ Technology/Documents\ -\ GallowayLab/instruments/data/keyence/Nathan/test/'
+    
+    # sp_source = '/2020.10.24.Hb9GFP.pPhage-SlowFT' # specific directory
     # source_dir = source_dir + sp_source
 
     # # Map conditions to file names and wells
