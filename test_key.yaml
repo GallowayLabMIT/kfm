@@ -1,6 +1,10 @@
 # Data file key
 
-folder: testing_everything
+user: 'Nathan'
+folder: 'test'
 
-wells:
-  A01: dsRed.None
+group_folder: 'testing_everything'
+  wells:
+    - A01-B12: 'dsRed'
+    - A01-A12: '6F'
+    - B01-B12: '6FDDRR'
