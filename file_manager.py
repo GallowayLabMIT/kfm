@@ -7,7 +7,7 @@ from datetime import datetime
 
 class IncorrectGroupbyError(RuntimeError):
     '''
-    Runtime error thrown when groupby option isn't one of avail options ['XY', 'T', 'stitch', 'Z', 'CH']
+    Runtime error thrown when groupby option isn't one of avail options ['none', 'XY', 'T', 'stitch', 'Z', 'CH'] or the option ['none'] is provided with other groupby args
     '''
 
 
@@ -106,23 +106,36 @@ def mapXYtoWell(path):
 
 def moveFiles(path, wellMap, groupby=['XY']):
     '''
-    Move files. Default is grouping by 'XY'
+    Move files. Default is grouping by 'XY'.
+
+    Args:
+    -----
+    path: A path pointing to the group folder path (keyence naming system)
+    wellMap: A dict mapping wells to conditions, e.g. {'A01': ['dsRed', 'None'], 'A02': ['dsRed', '6F']}
+    groupby: A list of how to group images where order dictates order of subdirectories (e.g. groupby=['XY', 'Z'] groups into group_folder_path/XY/Z). Also whenever
     '''
 
     # All ways to group images
-    groupby_opt = ['XY', 'T', 'stitch', 'Z', 'CH']
+    groupby_opt = ['none', 'XY', 'T', 'stitch', 'Z', 'CH']
 
+    # Check if user provided groupby option is correct
     try:
+        # Check if user provided groupby option is one of the avail options
         for group in groupby:
             if group not in groupby_opt:
                 # print(b)
-                raise(DestExistsError(
+                raise(IncorrectGroupbyError(
                     'Cannot group by \'{}\', select from: {}'.format(group, groupby_opt)))
+        
+        # Check if user provided groupby is just none that it's the only option provided 
+        if 'none' in groupby and len(groupby) != 1:
+            raise(IncorrectGroupbyError(
+                'If \'none\' option is selected, you cannot group by any other options as all images will be dumped into the group folder')
+            )
     except RuntimeError as error:
         print('Error: ' + repr(error))
         return
     
-
     # Determine image type and patttern for regex matching
     (img_type, pattern) = matchImgType(path)
 
@@ -152,9 +165,11 @@ def moveFiles(path, wellMap, groupby=['XY']):
             # Create path depending on groupby options
             dest = path
             for group_name in groupby:
-
+                # If none, don't specify any subdirectories b/c all will be dumped into the provided group_folder path
+                if group_name == 'none':
+                    break
                 # If XY replace with well info
-                if group_name == 'XY':
+                elif group_name == 'XY':
                     dest = dest / well_info
                 else:
                     dest = dest / (group_name + match.group(group_name))
@@ -190,6 +205,7 @@ def moveFiles(path, wellMap, groupby=['XY']):
 
     # Record where files got moved
     try:
+        # Check if record.txt exists in the current group folder - if it has the whole move should be completely reversed before attempting new moves
         if (path/'record.txt').exists():
             raise recordExistsError(
                 'Files have already been moved. Reverse the move before trying to move files again.')
@@ -247,9 +263,23 @@ def revMoveFiles(path):
         print('Error: ' + repr(error))
         return
 
+def rectWelltoArray(well_spec):
+    '''
+    Converts rectangle specification of wells to dictionary styl
+
+    Args:
+    -----
+    well_list: A list of rectangular well specifications where order of list specifies the list order, 
+               e.g. well_list = ['A01-B12':'dsRed', 'A01-A12':'6F'] will result in well 'A01':['dsRed', '6F']
+    '''
+
+    for (i,spec) in enumerate(well_spec):
+
+
+
 
 # well map
-wellMap = {'A01': 'dsRed.None', 'A02': 'dsRed.6F'}
+wellMap = {'A01': ['dsRed', 'None'], 'A02': ['dsRed', '6F']}
 
 # Paths
 user_path = Path.home() / 'OneDrive - Massachusetts Institute of Technology' / 'Documents - GallowayLab' / \
@@ -258,8 +288,8 @@ root = 'test'
 group_folder = 'testing_everything_Copy'
 
 # Actual path
-path = user_path / root / group_folder
+group_folder_path = user_path / root / group_folder
 
-# moveFiles(path=path, wellMap=wellMap)
-# moveFiles(path=path, wellMap=wellMap, groupby=['M'])
+# moveFiles(path=group_folder_path, wellMap=wellMap)
+# moveFiles(path=group_folder_path, wellMap=wellMap, groupby=['M'])
 # revMoveFiles(path)
