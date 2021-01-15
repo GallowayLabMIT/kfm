@@ -281,8 +281,9 @@ def rectWelltoArray(well_spec):
 
     Args:
     -----
-    well_list: A list of rectangular well specifications where order of list specifies the list order, 
+    well_list: A list of rectangular well specifications where order of list specifies the list order.
                e.g. well_list = [{'A01-B12':'dsRed'}, {'A01-A12':'6F'}] will result in well 'A01':['dsRed', '6F']
+               Both 'A01' and  'A1' would be accepted in this case
     '''
     well_letToNum = {let:i for (i, let) in enumerate('ABCDEFGH')}
 
