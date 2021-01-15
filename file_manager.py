@@ -263,17 +263,38 @@ def revMoveFiles(path):
         print('Error: ' + repr(error))
         return
 
-def rectWelltoArray(well_spec):
+
+def convWelltoCoord():
     '''
-    Converts rectangle specification of wells to dictionary styl
+    Given well in string format (e.g. 'A01' or 'A1')
 
     Args:
     -----
     well_list: A list of rectangular well specifications where order of list specifies the list order, 
-               e.g. well_list = ['A01-B12':'dsRed', 'A01-A12':'6F'] will result in well 'A01':['dsRed', '6F']
+               e.g. well_list = [{'A01-B12':'dsRed'}, {'A01-A12':'6F'}] will result in well 'A01':['dsRed', '6F']
     '''
 
+
+def rectWelltoArray(well_spec):
+    '''
+    Converts rectangle specification of wells to dictionary style
+
+    Args:
+    -----
+    well_list: A list of rectangular well specifications where order of list specifies the list order, 
+               e.g. well_list = [{'A01-B12':'dsRed'}, {'A01-A12':'6F'}] will result in well 'A01':['dsRed', '6F']
+    '''
+    well_letToNum = {let:i for (i, let) in enumerate('ABCDEFGH')}
+
+    well = [None] * 10
+
+    # map = list()
+    # e.g. spec = {'A01-B12':'dsRed'}
     for (i,spec) in enumerate(well_spec):
+        for (well, cond) in spec:
+            # Grab info from well rect spec
+            match = re.search('(?<well1_let>[a-zA-Z]{1})(?<well1_num>[\d]{1,2})\W(?<well2_let>[a-zA-Z]{1})(?<well2_num>[\d]{1,2})', spec[0])
+            # Send coord to
 
 
 
@@ -289,6 +310,9 @@ group_folder = 'testing_everything_Copy'
 
 # Actual path
 group_folder_path = user_path / root / group_folder
+
+
+rectWelltoArray([{'A01-B12': 'dsRed'}])
 
 # moveFiles(path=group_folder_path, wellMap=wellMap)
 # moveFiles(path=group_folder_path, wellMap=wellMap, groupby=['M'])
