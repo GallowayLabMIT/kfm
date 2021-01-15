@@ -5,6 +5,12 @@ import sys
 from datetime import datetime
 
 
+class IncorrectWellSpec(RuntimeError):
+    '''
+    Runtime error thrown when well specification is out of order (e.g. 'A12-A03' or isn't an avail option e.g.'A1-A20')
+    '''
+
+
 class IncorrectGroupbyError(RuntimeError):
     '''
     Runtime error thrown when groupby option isn't one of avail options ['none', 'XY', 'T', 'stitch', 'Z', 'CH'] or the option ['none'] is provided with other groupby args
@@ -38,7 +44,7 @@ def matchImgType(path):
         isZstack = True if (re.search('_Z(\d+)_', f.name) != None) else False
         isStitch = True if (re.search('_(\d{5})_', f.name) != None) else False
         break
-
+    
     img_type = {'isZstack': isZstack, 'isTimelapse': isTimelapse, 'isStitch': isStitch}
 
     # Make regex pattern where naming system is 'prefix_Timelapse_XY_Stitch_Zstack_Channel.tif'
@@ -69,7 +75,7 @@ def mapXYtoWell(path):
     """
     # Define dicts to help account keep track of wells and duplicates in wells
     XYtoWell = dict()          # e.g. {'XY01':'A01', 'XY02':'A01'}
-    welltoXY = dict()
+    welltoXY_unique = dict()
     XYtoWell_unique = dict()   # e.g. {'XY01':'A01(1)', 'XY02':'A01(2)'}
     well_list = list()
     duplicates = dict()        # e.g. {'A01':2}
@@ -86,7 +92,7 @@ def mapXYtoWell(path):
             # If 1st duplicate
             if well not in duplicates:
                 # Add existing entry to unique mapping as (1)
-                XYtoWell_unique[welltoXY[well]] = well+'(1)'
+                XYtoWell_unique[welltoXY_unique[well]] = well+'(1)'
                 # Add dup. entry to unique mapping as (2) then change dup count to 2
                 XYtoWell_unique[XY] = (well+'(2)')
                 duplicates[well] = 2
@@ -95,11 +101,13 @@ def mapXYtoWell(path):
                 XYtoWell_unique[XY] = '{}({})'.format(well, duplicates[well])
         # Otherwise well is unique
         else:
-            # Add XY mapping and add it as a unique well
-            XYtoWell[XY] = well
+            # Add it as a unique well and to the welltoXy mapping
             XYtoWell_unique[XY] = well
-            welltoXY[well] = XY
+            welltoXY_unique[well] = XY
             well_list.append(well)
+
+        # Regardless if dupl or not, add XY to well mapping b/c that will always be unique (all XYs are unique)
+        XYtoWell[XY] = well
     
     
     return (XYtoWell, XYtoWell_unique)
@@ -118,7 +126,7 @@ def moveFiles(path, wellMap, groupby=['XY']):
     # All ways to group images
     groupby_opt = ['none', 'XY', 'T', 'stitch', 'Z', 'CH']
 
-    # Check if user provided groupby option is correct
+    # Check if user provided groupby option is correct and this is a new move (e.g. no record.txt exists)
     try:
         # Check if user provided groupby option is one of the avail options
         for group in groupby:
@@ -132,6 +140,12 @@ def moveFiles(path, wellMap, groupby=['XY']):
             raise(IncorrectGroupbyError(
                 'If \'none\' option is selected, you cannot group by any other options as all images will be dumped into the group folder')
             )
+
+        # Check if record.txt exists in the current group folder - if it has the whole move should be completely reversed before attempting new moves
+        if (path/'record.txt').exists():
+            raise recordExistsError(
+                'Files have already been moved. Reverse the move before trying to move files again.')
+            
     except RuntimeError as error:
         print('Error: ' + repr(error))
         return
@@ -160,7 +174,7 @@ def moveFiles(path, wellMap, groupby=['XY']):
             # Get well ID (e.g. A01) and well info (e.g. 6FDDRR)
             well_ID = XYtoWell['XY'+match.group('XY')]  # e.g. A01
             uniq_well_ID = XYtoWell_unique['XY'+match.group('XY')] # e.g. A01(2)
-            well_info = wellMap[well_ID]  # e.g. A01 is 6FDDRR
+            well_info = '_'.join(wellMap[well_ID])  # e.g. if 'A01':['dsRed', '6F'] becomes dsRed_6F
 
             # Create path depending on groupby options
             dest = path
@@ -177,7 +191,7 @@ def moveFiles(path, wellMap, groupby=['XY']):
         # If dest dir doesn't exist, make one
         if not dest.exists():
             new_dirs.append(dest) # Note what new directories were made
-            Path(dest).mkdir(parents=True)
+            # Path(dest).mkdir(parents=True)
 
         # if tiff, make a new dest with the new file name
         if f.name[-4:] == '.tif': 
@@ -201,24 +215,14 @@ def moveFiles(path, wellMap, groupby=['XY']):
         record.append((str(f), str(dest)))
 
     # Remove all the old directories
-    rm_tree(path, new_dirs)
+    # rm_tree(path, new_dirs)
 
     # Record where files got moved
-    try:
-        # Check if record.txt exists in the current group folder - if it has the whole move should be completely reversed before attempting new moves
-        if (path/'record.txt').exists():
-            raise recordExistsError(
-                'Files have already been moved. Reverse the move before trying to move files again.')
-            
-        with open(path/'record.txt', mode='w') as fid:
-            fid.write('Time of record: ' +
-                    datetime.now().strftime('%Y/%m/%d, %H:%M:%S') + '\n')
-            for rec in record:
-                fid.write(rec[0] + '\t' + rec[1] + '\n')
-
-    except RuntimeError as error:
-        print('Error: ' + repr(error))
-        return
+    with open(path/'record.txt', mode='w') as fid:
+        fid.write('Time of record: ' +
+                datetime.now().strftime('%Y/%m/%d, %H:%M:%S') + '\n')
+        for rec in record:
+            fid.write(rec[0] + '\t' + rec[1] + '\n')
      
 def revMoveFiles(path):
     '''
@@ -263,39 +267,99 @@ def revMoveFiles(path):
         print('Error: ' + repr(error))
         return
 
-
-def convWelltoCoord():
+def convWelltoCoord(well):
     '''
-    Given well in string format (e.g. 'A01' or 'A1')
+    Given well in string format (e.g. 'A01' or 'A1'), convert to a coordinate (row, col) where 'A1'=(0,0) and B12=(1,11).
+    Will only accept max size of a 96-well, e.g. A01 to H12
 
     Args:
     -----
-    well_list: A list of rectangular well specifications where order of list specifies the list order, 
-               e.g. well_list = [{'A01-B12':'dsRed'}, {'A01-A12':'6F'}] will result in well 'A01':['dsRed', '6F']
+    well: a string representation of the well, e.g. 'A01' or 'A1' or 'a1'
     '''
+    row_letters = 'ABCDEFGH'
+    well_letToNum = {let: i for (i, let) in enumerate(row_letters)}
 
 
-def rectWelltoArray(well_spec):
+    # Grab info from well rect spec
+    match = re.match('(?P<well_let>[a-zA-Z]{1})(?P<well_num>[\d]{1,})', well)
+    well_let = match.group('well_let').capitalize()
+    well_num = int(match.group('well_num'))
+
+    # Check if w/in limits of 96-well
+    if well_let not in well_letToNum:
+        raise IncorrectWellSpec('Well row must be either in ' + row_letters)
+    if well_num > 12 or well_num < 1:
+        raise IncorrectWellSpec('Well col must be from 1-12')
+    
+    
+    # return coord in order (row, col)
+    return (well_letToNum[well_let], well_num-1)
+
+def convPlateToWellMap(plate):
     '''
-    Converts rectangle specification of wells to dictionary style
+    Given plate , give back dictionary mapping where plate[0][0] = ['dsRed', '6F'] gives back {'A01': ['dsRed', '6F']}
+    Will only accept max size of a 96-well, e.g. A01 to H12
 
     Args:
     -----
-    well_list: A list of rectangular well specifications where order of list specifies the list order.
-               e.g. well_list = [{'A01-B12':'dsRed'}, {'A01-A12':'6F'}] will result in well 'A01':['dsRed', '6F']
-               Both 'A01' and  'A1' would be accepted in this case
+    plate: a list of lists where plate[row][col] = [conditions], e.g. plate[0][0] = ['dsRed', '6F']
     '''
-    well_letToNum = {let:i for (i, let) in enumerate('ABCDEFGH')}
+    row_letters = 'ABCDEFGH'
+    well_colToLet = {i-1: '{:0>2d}'.format(i) for i in range(1,13)} # Pad single digits with 0 so col is 01 not 1
+    plate_map = dict()
 
-    well = [None] * 10
+    # Check if plate is w/in limits of 96-well
+    if len(plate) > 8 or len(plate[0]) > 12:
+        raise IncorrectWellSpec('The largest a plate can be is a 96-well')
 
-    # map = list()
-    # e.g. spec = {'A01-B12':'dsRed'}
-    for (i,spec) in enumerate(well_spec):
-        for (well, cond) in spec:
-            # Grab info from well rect spec
-            match = re.search('(?<well1_let>[a-zA-Z]{1})(?<well1_num>[\d]{1,2})\W(?<well2_let>[a-zA-Z]{1})(?<well2_num>[\d]{1,2})', spec[0])
-            # Send coord to
+    #  For plate[row][col], if there is a specified list of conditions then add it to the mapping
+    for row in range(len(plate)):
+        for col in range(len(plate[0])):
+            wellname = row_letters[row] + well_colToLet[col]
+            if plate[row][col] != None:
+                plate_map[wellname] =  plate[row][col]
+
+    return plate_map
+
+def toPlateMap(well_spec_list):
+    '''
+    Converts rectangle specification of wells to dictionary representation.
+
+    Args:
+    -----
+    well_spec_list: A list of rectangular well specifications where order of list specifies the list order.
+                    e.g. well_list = [{'A01-B12':'dsRed'}, {'A01-A12':'6F'}] will result in well 'A01':['dsRed', '6F']
+                    Both 'A01' and  'A1' would be accepted in this case
+    '''
+
+    # initialize 96-well plate (max size we have)
+    plate = [[None]*12 for i in range(8)] 
+
+    # For each well spec (e.g. spec = {'A01-B12':'dsRed'})
+    for (i, well_spec) in enumerate(well_spec_list):
+        # For each well names (e.g. 'A01-B12')
+        for (rect_well_names, cond) in well_spec.items():
+
+            # Get coords for each well spect
+            match = re.match('(?P<well1>\w{2,})\W(?P<well2>\w{2,})', rect_well_names)
+            coord1 = convWelltoCoord(match.group('well1'))
+            coord2 = convWelltoCoord(match.group('well2'))
+
+            # Check if coords occur in right position
+            if coord1[0] > coord2[0] or coord1[1] > coord2[1]:
+                raise IncorrectWellSpec('Upper left wells must be specified first, e.g. \'A1-B12\' NOT \'B12-A1\'')
+
+            # Add condition to appropriate wells
+            for row in range(coord1[0], coord2[0]+1):
+                for col in range(coord1[1], coord2[1]+1):
+                    if plate[row][col] == None:
+                        plate[row][col] = [cond] 
+                    else:
+                        plate[row][col].append(cond)
+
+    # Convert plate to well dictionary mapping and return the dict map
+    return convPlateToWellMap(plate)
+
 
 
 
@@ -307,14 +371,20 @@ wellMap = {'A01': ['dsRed', 'None'], 'A02': ['dsRed', '6F']}
 user_path = Path.home() / 'OneDrive - Massachusetts Institute of Technology' / 'Documents - GallowayLab' / \
     'instruments' / 'data' / 'keyence' / 'Nathan'
 root = 'test'
-group_folder = 'testing_everything_Copy'
+group_folder = 'testing_everything_copy'
 
 # Actual path
 group_folder_path = user_path / root / group_folder
 
 
-rectWelltoArray([{'A01-B12': 'dsRed'}])
+# f = toPlateMap([{'A1-B12': 'dsRed'}, {'A01-D03': '6F'}])
+# print('*'*20, '\n')
+# print(f)
+# convWelltoCoord('a1')
+# rectWelltoArray('A01-B12', 'dsRed')
+# rectWelltoArray('a01-B12', '6F')
 
-# moveFiles(path=group_folder_path, wellMap=wellMap)
+# print('{:0>2d}'.format(12))
+moveFiles(path=group_folder_path, wellMap=wellMap)
 # moveFiles(path=group_folder_path, wellMap=wellMap, groupby=['M'])
 # revMoveFiles(path)
