@@ -234,9 +234,10 @@ def moveFiles(path, wellMap, groupby=['natural']):
             # If cond replace with well info
             elif group_name == 'cond':
                 dest = dest / well_info
-            # If
+            # If XY replace with unique well ID (e.g. A01(2))
             elif group_name == 'XY':
-                dest = dest / well_info
+                dest = dest / (uniq_well_ID+'_'+well_info)
+            # Otherwise replace with T#, stitch#, or Z#
             else:
                 dest = dest / (group_name + match.group(group_name))
 
@@ -479,5 +480,5 @@ group_folder_path = user_path / root / group_folder
 # print('{:0>2d}'.format(12))
 wellMap = toPlateMap([{'A1-A2':'dsRed'}, {'A1':'None'}, {'A2': '6F'}])
 # print(wellMap)
-# moveFiles(path=group_folder_path, wellMap=wellMap, groupby=['XY'])
-revMoveFiles(path=group_folder_path)
+moveFiles(path=group_folder_path, wellMap=wellMap, groupby=['XY'])
+# revMoveFiles(path=group_folder_path)
