@@ -1,7 +1,5 @@
-import enum
 from pathlib import Path
 import re
-import sys
 from datetime import datetime
 
 
@@ -44,7 +42,7 @@ def matchImgType(path):
         isZstack = True if (re.search('_Z(\d+)_', f.name) != None) else False
         isStitch = True if (re.search('_(\d{5})_', f.name) != None) else False
         break
-    
+
     img_type = {'isZstack': isZstack, 'isTimelapse': isTimelapse, 'isStitch': isStitch}
 
     # Make regex pattern where naming system is 'prefix_Timelapse_XY_Stitch_Zstack_Channel.tif'
@@ -112,28 +110,70 @@ def mapXYtoWell(path):
     
     return (XYtoWell, XYtoWell_unique)
 
-def moveFiles(path, wellMap, groupby=['XY']):
+
+def getGroupbyPath(path, groupby, img_type):
     '''
-    Move files. Default is grouping by 'XY'.
+    Determine the path of where things will be moved depending on the groupby options
+
+
+    Args:
+    -----
+    path: A path pointing to the group folder path (keyence naming system)
+    groupby: A list of how to group images where order dictates order of subdirectories
+             (e.g. groupby=['XY', 'Z'] groups into group_folder_path/XY/Z).
+    imgtype: A boolean dict of what image properties it has ({'isZstack', 'isTimelapse', 'isStitch'})
+    '''
+
+    # Create path depending on groupby options
+    dest = path
+    for group_name in groupby:
+        # If none, don't specify any subdirectories b/c all will be dumped into the provided group_folder path
+        if group_name == 'none':
+            break
+        # If cond replace with well info
+        elif group_name == 'cond':
+            dest = dest / well_info
+        # If
+        elif group_name == 'XY':
+            dest = dest / well_info
+        else:
+            dest = dest / (group_name + match.group(group_name))
+
+
+def moveFiles(path, wellMap, groupby=['natural']):
+    '''
+    Move files. Default is grouping by 'natural' where all images get put in the natural ordering of:
+    
 
     Args:
     -----
     path: A path pointing to the group folder path (keyence naming system)
     wellMap: A dict mapping wells to conditions, e.g. {'A01': ['dsRed', 'None'], 'A02': ['dsRed', '6F']}
-    groupby: A list of how to group images where order dictates order of subdirectories (e.g. groupby=['XY', 'Z'] groups into group_folder_path/XY/Z). Also whenever
+    groupby: A list of how to group images where order dictates order of subdirectories 
+             (e.g. groupby=['XY', 'Z'] groups into group_folder_path/XY/Z).
     '''
 
     # All ways to group images
-    groupby_opt = ['none', 'XY', 'T', 'stitch', 'Z', 'CH']
+    groupby_opt = ['none', 'XY', 'cond', 'T', 'stitch', 'Z', 'CH', 'natural']
+    # Determine image type and patttern for regex matching
+    (img_type, pattern) = matchImgType(path)
 
     # Check if user provided groupby option is correct and this is a new move (e.g. no record.txt exists)
     try:
         # Check if user provided groupby option is one of the avail options
         for group in groupby:
             if group not in groupby_opt:
-                # print(b)
                 raise(IncorrectGroupbyError(
                     'Cannot group by \'{}\', select from: {}'.format(group, groupby_opt)))
+            if group == 'T' and not img_type['isStitch']:
+                raise(IncorrectGroupbyError(
+                    'Cannot group by \'{}\' because not timelapse image'.format(group)))
+            if group == 'stitch' and not img_type['isTimelapse']:
+                raise(IncorrectGroupbyError(
+                    'Cannot group by \'{}\' because not stitch image'.format(group)))
+            if group == 'Z' and not img_type['isZstack']:
+                raise(IncorrectGroupbyError(
+                    'Cannot group by \'{}\' because not Z stack image'.format(group)))
         
         # Check if user provided groupby is just none that it's the only option provided 
         if 'none' in groupby and len(groupby) != 1:
@@ -150,79 +190,107 @@ def moveFiles(path, wellMap, groupby=['XY']):
         print('Error: ' + repr(error))
         return
     
-    # Determine image type and patttern for regex matching
-    (img_type, pattern) = matchImgType(path)
-
     # Map each XY to a well, e.g. XY01 is A01
     (XYtoWell, XYtoWell_unique) = mapXYtoWell(path)
+    # groupby_path = getGroupbyPath(path, groupby)
 
     # Create a record list to store where files were moved in format of (oldpath, newpath)
     record = list()
     # Create a directory list to store what new directories were made
     new_dirs = list()
+    # Create a directory list to store what files weren't moved
+    unmoved_list = list()
 
-    for f in path.rglob('*'):
+    # Deal with everything that's not a .tif by moving it into a 'unmoved' folder
+    # note - don't need to do recursively b/c everything that's left behind in the group folder 
+    #        will get moved at top subdirectory level
+    dest = path / 'unmoved'
+    for f in group_folder_path.glob('*'):
+        # Skip if .DS_Store file in macs
+        if f.name == '.DS_Store':
+            continue
+        unmoved_list.append((f, dest/f.name))
+    dest.mkdir()
+    new_dirs.append(dest)
 
-        # If not tif, move file to somewhere it won't bother anyone :)
-        if f.name[-4:] != '.tif':  
-            dest = path / 'unmoved'
-        # Otherwise update the tif file name with well ID and info
-        else: 
-            # Extract metadata from img titles
-            match = re.search(pattern, f.name)
+    # Recursively go thru all tif files in specified group folder path
+    for f in path.rglob('*.tif'):
 
-            # Get well ID (e.g. A01) and well info (e.g. 6FDDRR)
-            well_ID = XYtoWell['XY'+match.group('XY')]  # e.g. A01
-            uniq_well_ID = XYtoWell_unique['XY'+match.group('XY')] # e.g. A01(2)
-            well_info = '_'.join(wellMap[well_ID])  # e.g. if 'A01':['dsRed', '6F'] becomes dsRed_6F
+        # Extract metadata from img titles
+        match = re.search(pattern, f.name)
 
-            # Create path depending on groupby options
-            dest = path
-            for group_name in groupby:
-                # If none, don't specify any subdirectories b/c all will be dumped into the provided group_folder path
-                if group_name == 'none':
-                    break
-                # If XY replace with well info
-                elif group_name == 'XY':
-                    dest = dest / well_info
-                else:
-                    dest = dest / (group_name + match.group(group_name))
+        # Get well ID (e.g. A01) and well info (e.g. 6FDDRR)
+        well_ID = XYtoWell['XY'+match.group('XY')]  # e.g. A01
+        uniq_well_ID = XYtoWell_unique['XY' +
+                                        match.group('XY')]  # e.g. A01(2)
+        well_info = '_'.join(wellMap[well_ID]) # e.g. if 'A01':['dsRed', '6F'] becomes dsRed_6F
 
-        # If dest dir doesn't exist, make one
+        # Create path depending on groupby options
+        dest = path
+        for group_name in groupby:
+            # If none, don't specify any subdirectories b/c all will be dumped into the provided group_folder path
+            if group_name == 'none':
+                break
+            # If cond replace with well info
+            elif group_name == 'cond':
+                dest = dest / well_info
+            # If
+            elif group_name == 'XY':
+                dest = dest / well_info
+            else:
+                dest = dest / (group_name + match.group(group_name))
+
+        # Make new directories for the new groupby options if necessary
         if not dest.exists():
-            new_dirs.append(dest) # Note what new directories were made
-            # Path(dest).mkdir(parents=True)
+            dest.mkdir(parents=True)
+            new_dirs.append(dest)  # Note what directories were made during the move so if move is reversed they
+                                   # can easily be deleted
 
-        # if tiff, make a new dest with the new file name
-        if f.name[-4:] == '.tif': 
-            # Sub XY## in pic name with the well ID and info (e.g. A01(2)_6FDD)
-            newFileName = re.sub('(XY\d+)', uniq_well_ID+'_'+well_info, f.name)
-            dest = dest / newFileName
+        # Sub XY## in pic name with the well ID and info (e.g. A01(2)_6FDD)
+        newFileName = re.sub('(XY\d+)', uniq_well_ID+'_'+well_info, f.name)
+        dest = dest / newFileName
 
+        # Record where file will be moved in order of (oldPath, newPath)
+        record.append((f, dest))
 
-        try:
-            # If destination already exists, don't move it
-            if dest.exists():
-                raise(
-                    DestExistsError(
-                        '\' {} \' could not be moved, destination already exists'.format(dest))
-                )
-        except RuntimeError as error:
-            print('Error: ' + repr(error))
-
-        # Otherwise, move the file and record where it's been moved in order of (oldPath, newPath)
-        # f.replace(dest)
-        record.append((str(f), str(dest)))
-
-    # Remove all the old directories
-    # rm_tree(path, new_dirs)
-
-    # Record where files got moved
+    # Record where files are getting moved in order of 1. unmoved files 2. tif files 3. any new directories made
+    # This makes reversing moves easier b/c unmoved files include top level subdirectories that must be moved first
+    # before any .tif files are moved (e.g. can't move .tif into path/XY01 if path/XY01 is now in path/misc/XY01)
     with open(path/'record.txt', mode='w') as fid:
-        fid.write('Time of record: ' +
-                datetime.now().strftime('%Y/%m/%d, %H:%M:%S') + '\n')
+        fid.write(
+                datetime.now().strftime('%Y.%m.%d_%H.%M.%S') + '\n')
+        for rec in unmoved_list:
+            fid.write(str(rec[0]) + '\t' + str(rec[1]) + '\n')
         for rec in record:
-            fid.write(rec[0] + '\t' + rec[1] + '\n')
+            fid.write(str(rec[0]) + '\t' + str(rec[1]) + '\n')
+        fid.write('new directories made\n')
+        for dir in new_dirs:
+            fid.write(str(dir)+'\n')
+
+    # Actually move tif files
+    for rec in record:
+        src = rec[0]
+        dest = rec[1]
+
+        if not dest.exists():
+            src.replace(dest)
+        else:
+            raise(
+                DestExistsError('\' {} \' could not be moved, destination already exists'.format(dest))
+            )
+        
+    # Actually move everything else
+    for rec in unmoved_list:
+        src = rec[0]
+        dest = rec[1]
+
+        if not dest.exists():
+            src.replace(dest)
+        else:
+            raise(
+                DestExistsError(
+                    '\' {} \' could not be moved, destination already exists'.format(dest))
+            )
      
 def revMoveFiles(path):
     '''
@@ -232,40 +300,44 @@ def revMoveFiles(path):
     -----
     path: A path pointing to directory that has record.txt which stores where files got moved to
     '''
-    try:
-        if not (path/'record.txt').exists():
-            raise recordDoesNotExistsError('record.txt not found in current working directory')
-            
-        with open(path/'record.txt', mode='r') as fid:
 
-            new_dirs = list()
+    if not (path/'record.txt').exists():
+        raise recordDoesNotExistsError('record.txt not found in current working directory')
+        
+    with open(path/'record.txt', mode='r') as fid:
 
-            for i,f in enumerate(fid.readlines()):
-                if i==0:
-                    record_time = f
+        isNewDirec = False
+        for i,f in enumerate(fid.readlines()):
+            if i==0:
+                record_time = f
+            # Mark new direc as true if we started hitting the new directories made in the move so 
+            # we can start delete the directories that were made in the move
+            elif f == 'new directories made\n':
+                isNewDirec = True
+            elif not isNewDirec:
+                line = f.rstrip().split('\t')
+                dest = Path(line[0])
+                src = Path(line[1])
+
+                # If destination file doesn't exist, move it
+                if not dest.exists():
+                    src.replace(dest)
                 else:
-                    line = f.rstrip().split('\t')
-                    src = line[0]
-                    dest = line[1]
+                    raise(
+                        DestExistsError(
+                            '\' {} \' could not be moved, destination already exists'.format(dest))
+                    )
 
-                    # If dest dir doesn't exist, make one
-                    if not dest.exists():
-                        new_dirs.append(dest)  # Note what new directories were made
-                        Path(dest).mkdir(parents=True)
+            # If the isNewDirec flag is true, start deleting the directories that were made 
+            # (i.e. weren't made by Keyence)
+            else:
+                newdir = Path(f.rstrip())
+                newdir.rmdir()
 
-                    # If destination already exists, don't move it
-                    if dest.exists():
-                        raise(DestExistsError('\' {} \' could not be moved, destination already exists'.format(dest)))
-
-        # Remove all the old directories
-        rm_tree(path, new_dirs)
-
-        # Success msg
-        print('Move successfully reversed at {}'.format(record_time))
-
-    except RuntimeError as error:
-        print('Error: ' + repr(error))
-        return
+    # Print success msg
+    print('Move successfully reversed at {}'.format(record_time))
+    # Rename record.txt file
+    (path/'record.txt').rename(path/('{}_rev_{}'.format(record_time.rstrip(), 'record.txt')))
 
 def convWelltoCoord(well):
     '''
@@ -330,6 +402,7 @@ def toPlateMap(well_spec_list):
     well_spec_list: A list of rectangular well specifications where order of list specifies the list order.
                     e.g. well_list = [{'A01-B12':'dsRed'}, {'A01-A12':'6F'}] will result in well 'A01':['dsRed', '6F']
                     Both 'A01' and  'A1' would be accepted in this case
+                    A single well can also be specified, e.g. 'A01':'None'
     '''
 
     # initialize 96-well plate (max size we have)
@@ -340,6 +413,19 @@ def toPlateMap(well_spec_list):
         # For each well names (e.g. 'A01-B12')
         for (rect_well_names, cond) in well_spec.items():
 
+            # Check if just a single well spec
+            if re.search('\W', rect_well_names) == None:
+                match = re.match('(?P<well1>\w{2,})', rect_well_names)
+                coord1 = convWelltoCoord(match.group('well1'))
+                row = coord1[0]
+                col = coord1[1]
+                if plate[row][col] == None:
+                    plate[row][col] = [cond]
+                else:
+                    plate[row][col].append(cond)
+                continue
+
+            # Otherwise it's mult. wells:
             # Get coords for each well spect
             match = re.match('(?P<well1>\w{2,})\W(?P<well2>\w{2,})', rect_well_names)
             coord1 = convWelltoCoord(match.group('well1'))
@@ -365,17 +451,23 @@ def toPlateMap(well_spec_list):
 
 
 # well map
-wellMap = {'A01': ['dsRed', 'None'], 'A02': ['dsRed', '6F']}
+# wellMap = {'A01': ['dsRed', 'None'], 'A02': ['dsRed', '6F']}
 
 # Paths
-user_path = Path.home() / 'OneDrive - Massachusetts Institute of Technology' / 'Documents - GallowayLab' / \
-    'instruments' / 'data' / 'keyence' / 'Nathan'
+# user_path = Path.home() / 'OneDrive - Massachusetts Institute of Technology' / 'Documents - GallowayLab' / \
+#     'instruments' / 'data' / 'keyence' / 'Nathan'
+user_path = Path.home() / 'Desktop'
 root = 'test'
-group_folder = 'testing_everything_copy'
+group_folder = 'testing_everything_Copy'
 
 # Actual path
 group_folder_path = user_path / root / group_folder
 
+# src = group_folder_path / 'XY01'
+# dest = group_folder_path / 'asdf'
+# src.replace(dest)
+# for f in group_folder_path.glob('*'):
+#     print(f.name)
 
 # f = toPlateMap([{'A1-B12': 'dsRed'}, {'A01-D03': '6F'}])
 # print('*'*20, '\n')
@@ -385,6 +477,7 @@ group_folder_path = user_path / root / group_folder
 # rectWelltoArray('a01-B12', '6F')
 
 # print('{:0>2d}'.format(12))
-moveFiles(path=group_folder_path, wellMap=wellMap)
-# moveFiles(path=group_folder_path, wellMap=wellMap, groupby=['M'])
-# revMoveFiles(path)
+wellMap = toPlateMap([{'A1-A2':'dsRed'}, {'A1':'None'}, {'A2': '6F'}])
+# print(wellMap)
+# moveFiles(path=group_folder_path, wellMap=wellMap, groupby=['XY'])
+revMoveFiles(path=group_folder_path)
