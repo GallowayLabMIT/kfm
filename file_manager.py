@@ -9,6 +9,12 @@ class IncorrectWellSpec(RuntimeError):
     '''
 
 
+class WellNotFound(RuntimeError):
+    '''
+    Runtime error thrown when well does not map to a Keyence XY# folder')
+    '''
+
+
 class IncorrectGroupbyError(RuntimeError):
     '''
     Runtime error thrown when groupby option isn't one of avail options ['none', 'XY', 'T', 'stitch', 'Z', 'CH'] or the option ['none'] is provided with other groupby args
@@ -256,6 +262,9 @@ def moveFiles(path, wellMap, groupby=['natural']):
         well_ID = XYtoWell['XY'+match.group('XY')]  # e.g. A01
         uniq_well_ID = XYtoWell_unique['XY' +
                                         match.group('XY')]  # e.g. A01(2)
+
+        if well_ID not in wellMap:
+            raise WellNotFound('{} not found in well mapping. Make sure {} has a specified condition'.format(well_ID, well_ID))
         well_info = '_'.join(wellMap[well_ID]) # e.g. if 'A01':['dsRed', '6F'] becomes dsRed_6F
 
         # Create path depending on groupby options
@@ -484,7 +493,7 @@ def toPlateMap(well_spec_list):
 # well map
 # wellMap = {'A01': ['dsRed', 'None'], 'A02': ['dsRed', '6F']}
 
-# Paths
+# Path
 # user_path = Path.home() / 'OneDrive - Massachusetts Institute of Technology' / 'Documents - GallowayLab' / \
 #     'instruments' / 'data' / 'keyence' / 'Nathan'
 user_path = Path.home() / 'Desktop'
@@ -507,8 +516,14 @@ group_folder_path = user_path / root / group_folder
 # rectWelltoArray('A01-B12', 'dsRed')
 # rectWelltoArray('a01-B12', '6F')
 
-# print('{:0>2d}'.format(12))
-wellMap = toPlateMap([{'A1-A2':'dsRed'}, {'A1':'None'}, {'A2': '6F'}])
-# print(wellMap)
+# # print('{:0>2d}'.format(12))
+# wellMap = toPlateMap([{'A1-A02':'dsRed'}, {'A1':'None'}, {'A2': '6F'}])
+# # print(wellMap)
 # moveFiles(path=group_folder_path, wellMap=wellMap, groupby=['natural'])
-revMoveFiles(path=group_folder_path)
+# revMoveFiles(path=group_folder_path)
+
+
+import yaml
+with open('test_key.yaml') as file:
+    a = yaml.load(file, Loader=yaml.FullLoader)
+    print(a)
