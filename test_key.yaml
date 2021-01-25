@@ -1,15 +1,14 @@
-# Data file key
- path: '/Users/Nathan/Desktop/test/'
+# # Data file key
+# path: '/Users/Nathan/Desktop/test/testing_everything'
 
-# group by options: ['none', 'XY', 'cond', 'T', 'stitch', 'Z', 'CH', 'natural']
-# note - grouping will be done in order, e.g. groupby=['XY', 'Z'] groups into group_folder_path/XY/Z.
-# note - natural grouping is done by condition/XY/stitch(opt)/Z(opt)/CH so you can easily scroll thru images
- groupby:
-  - 'cond'
-  - 'CH'
+# # group by options: ['none', 'XY', 'cond', 'T', 'stitch', 'Z', 'CH', 'natural']
+# # note - grouping will be done in order, e.g. groupby=['XY', 'Z'] groups into group_folder_path/XY/Z.
+# # note - natural grouping is done by condition/XY/stitch(opt)/Z(opt)/CH so you can easily scroll thru images
+# groupby:
+#   - 'cond'
+#   - 'CH'
 
- group_folder: 'testing_everything'
-  wells:
-    - A01-A2: 'dsRed'
-    - A1: 'None'
-    - A2: '6F'
+wells:
+  - A01-A2: dsRed
+  - A1: None
+  - A2: 6F
