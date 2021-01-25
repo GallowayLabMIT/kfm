@@ -1,3 +1,4 @@
 env
 .vscode/settings.json
 workspace.code-workspace
+keyence_file_management/__pycache__/__init__.cpython-37.pyc

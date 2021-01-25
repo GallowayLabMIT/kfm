@@ -523,26 +523,45 @@ group_folder_path = user_path / root / group_folder
 # revMoveFiles(path=group_folder_path)
 
 
-# import yaml
-# with open('test_key.yaml') as file:
-#     data = yaml.load(file, Loader=yaml.FullLoader)
-#     print(data['wells'])
 
 
     
 import argparse
+import yaml
 
-parser = argparse.ArgumentParser(description='Organize Keyence files')
-parser.add_argument('group_folder_path', metavar='path',
-                    help='Path to group folder')
-parser.add_argument('groupby_opt', nargs='+',
-                    help='Groupby options: [\'none\', \'XY\', \'cond\', \'T\', \'stitch\', \'Z\', \'CH\', \'natural\'] \n \
-                          \t Grouping will be done in order, e.g. groupby=[\'XY\', \'Z\'] groups into group_folder_path/XY/Z. \n \
-                          \t Natural grouping is done by condition/XY/stitch(opt)/Z(opt)/CH so you can easily scroll thru images.' 
+
+
+parser = argparse.ArgumentParser(prog='kfm', description='Organize Keyence files')
+parser.add_argument('group_folder_path', metavar='path', nargs='?', default='.',
+                    help='Path to group folder. Default is current folder.')
+group = parser.add_mutually_exclusive_group()
+group.add_argument('-reverse', action='store_true',
+                    help='Reverse kfm file move'
                     )
-# parser.add_argument('-sum', dest='accumulate', action='store_const',
-#                     const=sum, default=max,
-#                     help='sum the integers (default: find the max)')
+group.add_argument('-opt', dest='group_by', nargs='*', default='natural', choices=['none', 'XY', 'cond', 'T', 'stitch', 'Z', 'CH', 'natural'],
+                    help='Grouping will be done in order, e.g. groupby=[\'XY\', \'Z\'] groups into group_folder_path/XY/Z. \
+                          Natural grouping is done by condition/XY/stitch(opt)/Z(opt)/CH so you can easily scroll thru images.'
+                    )
+parser.add_argument('-ypath', dest='yaml_path', nargs='?',
+                    help='Path to yaml file containing well description.'
+                    )
 
-# args = parser.parse_args()
-# print(args.accumulate(args.integers))
+args = parser.parse_args()
+
+# print(vars(args))
+# If no yaml_path given , look in group folder path
+if args.yaml_path == None:
+    args.yaml_path = args.group_folder_path
+
+# Read in 1st well map
+yaml_path = Path(args.yaml_path)
+for f in yaml_path.glob('*yaml'):
+    with open(f) as file:
+        data = yaml.load(file, Loader=yaml.FullLoader)
+        wellMap = toPlateMap(data['wells'])
+    break
+
+# print(path.resolve())
+if args.reverse == True:
+    revMoveFiles(path=Path(args.group_folder_path))
+
