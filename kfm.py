@@ -549,7 +549,7 @@ parser.add_argument('-ypath', dest='yaml_path', nargs='?',
 args = parser.parse_args()
 
 # print(vars(args))
-# If no yaml_path given , look in group folder path
+# If no yaml_path given, look in group folder path
 if args.yaml_path == None:
     args.yaml_path = args.group_folder_path
 
@@ -561,7 +561,6 @@ for f in yaml_path.glob('*yaml'):
         wellMap = toPlateMap(data['wells'])
     break
 
-# print(path.resolve())
 if args.reverse == True:
     revMoveFiles(path=Path(args.group_folder_path))
 
