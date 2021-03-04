@@ -116,7 +116,6 @@ def mapXYtoWell(path):
     
     return (XYtoWell, XYtoWell_unique)
 
-
 def getGroupbyPath(path, groupby, img_type, well_info, uniq_well_ID, match):
     '''
     Determine the path of where things will be moved depending on the groupby options
@@ -161,7 +160,6 @@ def getGroupbyPath(path, groupby, img_type, well_info, uniq_well_ID, match):
     # Return destination path
     return dest
 
-
 def rmkdir(dest, new_dirs):
     '''
     Recursively make new directories as needed so parents are created first then children and are noted in 
@@ -182,7 +180,7 @@ def rmkdir(dest, new_dirs):
 
 def moveFiles(path, wellMap, groupby=['natural']):
     '''
-    Move files. Default is grouping by 'natural' where all images get put in the natural ordering of:
+    Main functiont that moves files. Default is grouping by 'natural' where all images get put in the natural ordering of:
     
 
     Args:
@@ -241,7 +239,7 @@ def moveFiles(path, wellMap, groupby=['natural']):
     # note - don't need to do recursively b/c everything that's left behind in the group folder 
     #        will get moved at top subdirectory level
     dest = path / 'unmoved'
-    for f in group_folder_path.glob('*'):
+    for f in path.glob('*'):
         # Skip if .DS_Store file in macs
         if f.name == '.DS_Store':
             continue
@@ -487,48 +485,20 @@ def toPlateMap(well_spec_list):
     return convPlateToWellMap(plate)
 
 
-
-
-
-# well map
-# wellMap = {'A01': ['dsRed', 'None'], 'A02': ['dsRed', '6F']}
-
 # Path
-# user_path = Path.home() / 'OneDrive - Massachusetts Institute of Technology' / 'Documents - GallowayLab' / \
-#     'instruments' / 'data' / 'keyence' / 'Nathan'
-user_path = Path.home() / 'Desktop'
-root = 'test'
-group_folder = 'testing_everything_Copy'
+# # user_path = Path.home() / 'OneDrive - Massachusetts Institute of Technology' / 'Documents - GallowayLab' / \
+# #     'instruments' / 'data' / 'keyence' / 'Nathan'
+# user_path = Path.home() / 'Desktop'
+# root = 'test'
+# group_folder = 'testing_everything_Copy'
 
-# Actual path
-group_folder_path = user_path / root / group_folder
-
-# src = group_folder_path / 'XY01'
-# dest = group_folder_path / 'asdf'
-# src.replace(dest)
-# for f in group_folder_path.glob('*'):
-#     print(f.name)
-
-# f = toPlateMap([{'A1-B12': 'dsRed'}, {'A01-D03': '6F'}])
-# print('*'*20, '\n')
-# print(f)
-# convWelltoCoord('a1') 
-# rectWelltoArray('A01-B12', 'dsRed')
-# rectWelltoArray('a01-B12', '6F')
-
-# # print('{:0>2d}'.format(12))
-# wellMap = toPlateMap([{'A1-A02':'dsRed'}, {'A1':'None'}, {'A2': '6F'}])
-# # print(wellMap)
-# moveFiles(path=group_folder_path, wellMap=wellMap, groupby=['natural'])
-# revMoveFiles(path=group_folder_path)
-
-
+# # Actual path
+# group_folder_path = user_path / root / group_folder
 
 
     
 import argparse
 import yaml
-
 
 
 parser = argparse.ArgumentParser(prog='kfm', description='Organize Keyence files')
@@ -538,7 +508,7 @@ group = parser.add_mutually_exclusive_group()
 group.add_argument('-reverse', action='store_true',
                     help='Reverse kfm file move'
                     )
-group.add_argument('-opt', dest='group_by', nargs='*', default='natural', choices=['none', 'XY', 'cond', 'T', 'stitch', 'Z', 'CH', 'natural'],
+group.add_argument('-opt', dest='group_by', nargs='*', default=['natural'], choices=['none', 'XY', 'cond', 'T', 'stitch', 'Z', 'CH', 'natural'],
                     help='Grouping will be done in order, e.g. groupby=[\'XY\', \'Z\'] groups into group_folder_path/XY/Z. \
                           Natural grouping is done by condition/XY/stitch(opt)/Z(opt)/CH so you can easily scroll thru images.'
                     )
@@ -548,7 +518,6 @@ parser.add_argument('-ypath', dest='yaml_path', nargs='?',
 
 args = parser.parse_args()
 
-# print(vars(args))
 # If no yaml_path given, look in group folder path
 if args.yaml_path == None:
     args.yaml_path = args.group_folder_path
@@ -561,6 +530,10 @@ for f in yaml_path.glob('*yaml'):
         wellMap = toPlateMap(data['wells'])
     break
 
-if args.reverse == True:
+if args.reverse == False:
+    # Move files in group folder
+    moveFiles(Path(args.group_folder_path), wellMap, groupby=args.group_by)
+else:
     revMoveFiles(path=Path(args.group_folder_path))
+
 
