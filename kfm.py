@@ -27,12 +27,12 @@ class DestExistsError(RuntimeError):
     '''
 
 
-class recordExistsError(RuntimeError):
+class RecordExistsError(RuntimeError):
     '''
     Runtime error thrown when trying to move when record still exists - should reverse move first before attempting more moves
     '''
 
-class recordDoesNotExistsError(RuntimeError):
+class RecordDoesNotExistsError(RuntimeError):
     '''
     Runtime error thrown when trying to reverse move but record doesn't exists in the working directory
     '''
@@ -221,7 +221,7 @@ def moveFiles(path, wellMap, groupby=['natural']):
         
         # Check if record.txt exists in the current group folder - if it has the whole move should be completely reversed before attempting new moves
         if (path/'record.txt').exists():
-            raise recordExistsError(
+            raise RecordExistsError(
                 'Files have already been moved. Reverse the move before trying to move files again.')
             
     except RuntimeError as error:
@@ -329,7 +329,7 @@ def revMoveFiles(path):
     '''
 
     if not (path/'record.txt').exists():
-        raise recordDoesNotExistsError('record.txt not found in current working directory')
+        raise RecordDoesNotExistsError('record.txt not found in current working directory')
         
     new_dir_list = list()
 
