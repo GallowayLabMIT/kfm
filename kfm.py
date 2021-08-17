@@ -1,6 +1,11 @@
+import itertools
+from collections.abc import Mapping
 from pathlib import Path
 import re
 from datetime import datetime
+import argparse
+import yaml
+import json
 
 
 class IncorrectWellSpec(RuntimeError):
@@ -37,6 +42,7 @@ class RecordDoesNotExistsError(RuntimeError):
     Runtime error thrown when trying to reverse move but record doesn't exists in the working directory
     '''
 
+
 def matchImgType(path):
     """
     Given path to group folder, determine image type for the group folder
@@ -44,34 +50,25 @@ def matchImgType(path):
 
     # Just check using first tif file found
     for f in path.rglob('*.tif'):
-        isTimelapse = True if (re.search('_T(\d+)_', f.name) != None) else False
-        isZstack = True if (re.search('_Z(\d+)_', f.name) != None) else False
-        isStitch = True if (re.search('_(\d{5})_', f.name) != None) else False
+        isTimelapse = True if (re.search(r'_T(\d+)_', f.name) != None) else False
+        isZstack = True if (re.search(r'_Z(\d+)_', f.name) != None) else False
+        isStitch = True if (re.search(r'_(\d{5})_', f.name) != None) else False
         break
 
     img_type = {'isZstack': isZstack, 'isTimelapse': isTimelapse, 'isStitch': isStitch}
 
     # Make regex pattern where naming system is 'prefix_Timelapse_XY_Stitch_Zstack_Channel.tif'
-    pattern = '(?P<prefix>\w+)'
+    pattern = r'(?P<prefix>\w+)'
     if img_type['isTimelapse']:
-        pattern += '_(?P<T>T{1}\d+)'
-    pattern += '_XY(?P<XY>\d+)'
+        pattern += r'_(?P<T>T{1}\d+)'
+    pattern += r'_XY(?P<XY>\d+)'
     if img_type['isStitch']:
-        pattern += '_(?P<stitch>\d{5})'
+        pattern += r'_(?P<stitch>\d{5})'
     if img_type['isZstack']:
-        pattern += '_(?P<Z>Z{1}\d+)'
-    pattern += '_(?P<CH>.*).tif'
+        pattern += r'_(?P<Z>Z{1}\d+)'
+    pattern += r'_(?P<CH>.*).tif'
     
     return (img_type, pattern)
-
-def rm_tree(path, new_dirs):
-    '''
-    Recursively remove directories if it's not a newly made directory during the move
-    '''
-    for child in path.glob('*'):
-        if child.is_dir() and path not in new_dirs:
-            rm_tree(child)
-    path.rmdir()
 
 def mapXYtoWell(path):
     """
@@ -85,7 +82,7 @@ def mapXYtoWell(path):
     duplicates = dict()        # e.g. {'A01':2}
 
     # Find each XY##/_WELL shortcut folder
-    for f in path.glob('*XY*/_*'):
+    for f in path.glob(r'*XY*/_*'):
 
         well = f.name[1:]  # ignore '_' that precedes each well shortcut
         XY = f.parent.name
@@ -174,7 +171,7 @@ def rmkdir(dest, new_dirs):
     dest.mkdir()
     # Note what directories were made during the move so if move is reversed
     # children can be deleted before parent directories
-    new_dirs.append(dest)
+    new_dirs.append(str(dest))
     
     return 
 
@@ -243,9 +240,9 @@ def moveFiles(path, wellMap, groupby=['natural']):
         # Skip if .DS_Store file in macs
         if f.name == '.DS_Store':
             continue
-        unmoved_list.append((f, dest/f.name))
+        unmoved_list.append((str(f), str(dest/f.name)))
     dest.mkdir()
-    new_dirs.append(dest)
+    new_dirs.append(str(dest))
 
 
     # Map each XY to a well, e.g. XY01 is A01
@@ -263,41 +260,37 @@ def moveFiles(path, wellMap, groupby=['natural']):
 
         if well_ID not in wellMap:
             raise WellNotFound('{} not found in well mapping. Make sure {} has a specified condition'.format(well_ID, well_ID))
-        well_info = '_'.join(wellMap[well_ID]) # e.g. if 'A01':['dsRed', '6F'] becomes dsRed_6F
 
         # Create path depending on groupby options
         dest = getGroupbyPath(path, groupby, img_type,
-                              well_info, uniq_well_ID, match)
+                              wellMap[well_ID], uniq_well_ID, match)
 
         # Make new directories for the new groupby options if necessary
         if not dest.exists():
             rmkdir(dest, new_dirs)
 
         # Sub XY## in pic name with the well ID and info (e.g. A01(2)_6FDD)
-        newFileName = re.sub('(XY\d+)', uniq_well_ID+'_'+well_info, f.name)
+        newFileName = re.sub(r'(XY\d+)', uniq_well_ID+'_'+wellMap[well_ID], f.name)
         dest = dest / newFileName
 
         # Record where file will be moved in order of (oldPath, newPath)
-        record.append((f, dest))
+        record.append((str(f), str(dest)))
 
     # Record where files are getting moved in order of 1. unmoved files 2. tif files 3. any new directories made
     # This makes reversing moves easier b/c unmoved files include top level subdirectories that must be moved first
     # before any .tif files are moved (e.g. can't move .tif into path/XY01 if path/XY01 is now in path/misc/XY01)
-    with open(path/'record.txt', mode='w') as fid:
-        fid.write(
-                datetime.now().strftime('%Y.%m.%d_%H.%M.%S') + '\n')
-        for rec in unmoved_list:
-            fid.write(str(rec[0]) + '\t' + str(rec[1]) + '\n')
-        for rec in record:
-            fid.write(str(rec[0]) + '\t' + str(rec[1]) + '\n')
-        fid.write('new directories made\n')
-        for dir in new_dirs:
-            fid.write(str(dir)+'\n')
+    with open(path/'record.json', mode='w') as fid:
+    
+        json.dump({
+            'record_time': datetime.now().strftime('%Y.%m.%d_%H.%M.%S'),
+            'unmoved_list': unmoved_list, 
+            'record': record,
+            'new_dirs': new_dirs}, fid)
 
     # Actually move tif files
     for rec in record:
-        src = rec[0]
-        dest = rec[1]
+        src = Path(rec[0])
+        dest = Path(rec[1])
 
         if not dest.exists():
             src.replace(dest)
@@ -308,8 +301,8 @@ def moveFiles(path, wellMap, groupby=['natural']):
         
     # Actually move everything else
     for rec in unmoved_list:
-        src = rec[0]
-        dest = rec[1]
+        src = Path(rec[0])
+        dest = Path(rec[1])
 
         if not dest.exists():
             src.replace(dest)
@@ -321,61 +314,53 @@ def moveFiles(path, wellMap, groupby=['natural']):
      
 def revMoveFiles(path):
     '''
-    Reverse the file move using history recorded in record.txt
+    Reverse the file move using history recorded in record.json
 
     Args:
     -----
-    path: A path pointing to directory that has record.txt which stores where files got moved to
+    path: A path pointing to directory that has record.json which stores where files got moved to
     '''
 
-    if not (path/'record.txt').exists():
+    if not (path/'record.json').exists():
         raise RecordDoesNotExistsError('record.txt not found in current working directory')
         
     new_dir_list = list()
 
-    with open(path/'record.txt', mode='r') as fid:
+    with open(path/'record.json', mode='r') as file:
 
-        isNewDirec = False
-        for i,f in enumerate(fid.readlines()):
-            if i==0:
-                record_time = f
-            # Mark new direc as true if we started hitting the new directories made in the move so 
-            # we can start delete the directories that were made in the move
-            elif f == 'new directories made\n':
-                isNewDirec = True
-            elif not isNewDirec:
-                line = f.rstrip().split('\t')
-                dest = Path(line[0])
-                src = Path(line[1])
+        # Load json data for reversing the move
+        rev_data = json.load(file)
 
-                # If destination file doesn't exist, move it
-                if not dest.exists():
-                    src.replace(dest)
-                else:
-                    raise(
-                        DestExistsError(
-                            '\' {} \' could not be moved, destination already exists'.format(dest))
-                    )
+        # For the unmoved and record files, simply reverse the move
+        for rec in rev_data['unmoved_list']+rev_data['record']:
 
-            # If the isNewDirec flag is true, start adding the directories that were made 
-            # (i.e. weren't made by Keyence)
+            dest = Path(rec[0])
+            src = Path(rec[1])
+
+            # If destination file doesn't exist, move it
+            if not dest.exists():
+                src.replace(dest)
             else:
-                new_dir_list.append(f.rstrip())
-    
-    # Sort new_dir_list by rev length so subdirectories will be deleted before parent ones
-    new_dir_list.sort(key=len, reverse=True)
-    for newdir in new_dir_list:
-        # Check if newdir is empty (size 64)
-        newdir = Path(newdir)
-        # If not - try removing hidden .DS_Store file for Macs
-        if newdir.stat().st_size != 64:
-            (newdir/'.DS_Store').unlink()
-        Path(newdir).rmdir()
+                raise(
+                    DestExistsError(
+                        '\' {} \' could not be moved, destination already exists'.format(dest))
+                )
+        
+        # Load and sort new_dir_list by rev length so subdirectories will be deleted before parent ones
+        new_dir_list = rev_data['new_dirs']
+        new_dir_list.sort(key=len, reverse=True)
+        for newdir in new_dir_list:
+            # Check if newdir is empty (size 64)
+            newdir = Path(newdir)
+            # If not - try removing hidden .DS_Store file for Macs
+            if newdir.stat().st_size != 64:
+                (newdir/'.DS_Store').unlink()
+            Path(newdir).rmdir()
 
     # Print success msg
-    print('Move successfully reversed at {}'.format(record_time))
+    print('Move successfully reversed at {}'.format(rev_data['record_time']))
     # Rename record.txt file
-    (path/'record.txt').rename(path/('{}_rev_{}'.format(record_time.rstrip(), 'record.txt')))
+    (path/'record.json').rename(path/('{}_rev_{}'.format(rev_data['record_time'], 'record.json')))
 
 def convWelltoCoord(well):
     '''
@@ -485,20 +470,154 @@ def toPlateMap(well_spec_list):
     return convPlateToWellMap(plate)
 
 
+"""
+Helper module that parses plate specifications of the form:
+MEF-low: A1-E1
+MEF-bulk: F1-H1, A2-H2, A3-B3
+retroviral: A1-H12
+This format allows for robust and concise description of plate maps.
+Specification
+-------------
+While these plate maps can be concisely defined inside YAML or JSON
+files, this specification does not define an underlying format; it only
+deals with how to handle the specification.
+A *well specification* is a string containing a comma-separated list of
+*region specifiers*. A region specifier is one of two forms, a single
+well form:
+    A1
+    B05
+or a rectangular region form:
+    A1-A12
+    B05-D8
+    B05 - C02
+As seen in these examples, the rectangular region form is distinguished
+by the presence of a hyphen between two single-well identifiers. Whitespace
+and leading zeros are allowed.
+A well specification is first *normalized* by the software, where all whitespace
+characters are removed. The resulting string is split by commas, and further parsed
+as one of the region specifiers.
+Within a single specifier, duplicate entries are *ignored*. That is, the following
+specifiers are all equivilant:
+    A5-B7
+    A5,A6,A7,B5,B6,B7
+    A5-B7,B6
+    A5-B7,B5-B7
+A *plate specification* is either a dictionary (if order is not important)
+or a sequence of dictionaries (if order is important). The difference between these
+in a YAML underlying format is:
+test: A5-A7
+test2: A5-A9
+which yields {'test': 'A5-A7', 'test2': 'A5-A9'}
+and
+- test: A5-A7
+- test2: A5-A9
+which yields [{'test': 'A5-A7'}, {'test2': 'A5-A9'}]
+This module reads either of these formats. It iterates over each of the well specifications,
+building up a dictionary that maps wells to conditions. If multiple well specifications overlap,
+then condition names are merged in the order in which they appear, separated by a separator
+(by default, a period). This allows very concise condition layouts, such as the following:
+conditions:
+    MEF: A1-C12
+    293: D1-F12
+    untransformed: A1-D3
+    experimental: A4-D12
+will return a well map of the form:
+{'A1': 'MEF.untransformed', ..., 'C10: 293.experimental'}
+Returned well numbers are normalized (e.g. no leading zeros)
+"""
+def well_mapping(plate_spec, separator='.'):
+    """
+    Generates a well mapping, given a plate specification
+    and an optional separator.
+    Parameters
+    ----------
+    plate_spec: dict or iterable
+        Either a single dictionary containing well specifications,
+        or an iterable (list, tuple, etc) that returns dictionaries
+        or well specifications as items.
+    separator: str
+        The separator to use for overlapping plate specifications
+    
+    Returns
+    -------
+    A dictionary that maps wells to conditions.
+    """
+    # Save plate_spec into a list of a single dictionary if it isn't already an iterable of dictionaries
+    if isinstance(plate_spec, Mapping):
+        plate_spec = [plate_spec]
+
+    # Char To Int mapping and Int To Char mapping
+    cti_mapping = {v: k for k, v in enumerate(list('ABCDEFGHIJKLMNOP'))}
+    itc_mapping = {k: v for k, v in enumerate(list('ABCDEFGHIJKLMNOP'))}
+
+    output_mapping = {}
+    for mapping_dict in plate_spec:
+        for key, val in mapping_dict.items():
+            # Remove all whitespace
+            tokenized = ''.join(val.split()).split(',')
+
+            wells = set()
+            for token in tokenized:
+                single_result = re.fullmatch(r'^([A-P]\d+)$', token)
+                dual_result = re.fullmatch(r'^([A-P]\d+)-([A-P]\d+)$', token)
+                if single_result is None and dual_result is None:
+                    raise ValueError(
+                        'Invalid mapping spec: {}:{}, problem spec: {}'.format(key, val, token))
+
+                if single_result is not None:
+                    # Add a single well to the well mapping
+                    wells.add('{}{:02d}'.format(
+                        single_result.group(1)[0],
+                        int(single_result.group(1)[1:])))
+                else:
+                    # Iterate over all wells
+                    corners = [(cti_mapping[dual_result.group(i)[0]],
+                                int(dual_result.group(i)[1:])) for i in range(1, 3)]
+                    for well in itertools.product(
+                            range(min(corners[0][0], corners[1][0]),
+                                  max(corners[0][0], corners[1][0]) + 1),
+                            range(min(corners[0][1], corners[1][1]),
+                                  max(corners[0][1], corners[1][1]) + 1)):
+                        wells.add('{}{:02d}'.format(
+                            itc_mapping[well[0]], well[1]))
+            for well in wells:
+                if well not in output_mapping:
+                    output_mapping[well] = key
+                else:
+                    output_mapping[well] = output_mapping[well] + \
+                        separator + key
+    return output_mapping
+
+
 # Path
-# # user_path = Path.home() / 'OneDrive - Massachusetts Institute of Technology' / 'Documents - GallowayLab' / \
-# #     'instruments' / 'data' / 'keyence' / 'Nathan'
-# user_path = Path.home() / 'Desktop'
-# root = 'test'
-# group_folder = 'testing_everything_Copy'
+# user_path = Path.home() / 'OneDrive - Massachusetts Institute of Technology' / 'Documents - GallowayLab' / \
+#     'instruments' / 'data' / 'keyence' / 'Nathan' / 'Reprogram'  
+
+# root = '2021.08.16_NT_SlowFT_test_02'
+# group_folder = '2021.08.16_NT_4dpi'
 
 # # Actual path
 # group_folder_path = user_path / root / group_folder
 
+# # Read in 1st well map
+# yaml_path = Path(group_folder_path)
+# for f in yaml_path.glob('*yaml'):
+#     with open(f) as file:
+#         data = yaml.safe_load(file)
+#         wellMap = well_mapping(data['wells'])
+#     break
 
-    
-import argparse
-import yaml
+# reverse = True
+
+
+# if reverse == False:
+#     # Move files in group folder
+#     moveFiles(Path(group_folder_path), wellMap, groupby=['cond'])
+# else:
+#     revMoveFiles(path=Path(group_folder_path))
+
+
+
 
 
 parser = argparse.ArgumentParser(prog='kfm', description='Organize Keyence files')
@@ -526,8 +645,8 @@ if args.yaml_path == None:
 yaml_path = Path(args.yaml_path)
 for f in yaml_path.glob('*yaml'):
     with open(f) as file:
-        data = yaml.load(file, Loader=yaml.FullLoader)
-        wellMap = toPlateMap(data['wells'])
+        data = yaml.safe_load(file)
+        wellMap = well_mapping(data['wells'])
     break
 
 if args.reverse == False:
