@@ -477,6 +477,7 @@ def well_mapping(plate_spec, separator='.'):
     return output_mapping
 
 
+'''
 # Path
 user_path = Path.home() / 'OneDrive - Massachusetts Institute of Technology' / 'Documents - GallowayLab' / \
     'instruments' / 'data' / 'keyence' / 'Nathan' / 'Reprogram'  
@@ -511,10 +512,10 @@ try:
 except KfmError as error:
     print('Error: ' + repr(error), file=sys.stderr)
     sys.exit(1)
-
-
-
 '''
+
+
+
 # Add arg parser
 parser = argparse.ArgumentParser(prog='kfm', description='Organize Keyence files')
 
@@ -541,8 +542,6 @@ parser.add_argument('-ypath', dest='yaml_path', nargs='?',
 
 args = parser.parse_args()
 
-
-
 try:
     # If no yaml_path given, look in group folder path
     if args.yaml_path == None:
@@ -565,4 +564,4 @@ try:
 except KfmError as error:
     print('Error: ' + repr(error), file=sys.stderr)
     sys.exit(1)
-'''
+
