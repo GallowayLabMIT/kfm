@@ -2,8 +2,6 @@
 [![PyPI version fury.io](https://badge.fury.io/py/kfm.svg)](https://pypi.python.org/pypi/ansicolortags/)
 [![PyPI license](https://img.shields.io/pypi/l/kfm.svg)](https://pypi.python.org/pypi/kfm/)
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/kfm.svg)](https://pypi.python.org/pypi/kfm/)
-
-[![PyPI download total](https://img.shields.io/pypi/dt/kfm.svg)](https://pypi.python.org/pypi/kfm/)
 ![Maintaner](https://img.shields.io/badge/maintainer-nbwang22-blue)
 
  A better way to manage Keyence files.
