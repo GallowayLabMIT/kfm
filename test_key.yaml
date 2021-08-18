@@ -1,7 +1,0 @@
-# # Data file key
-# path: '/Users/Nathan/Desktop/test/testing_everything'
-
-wells:
-  - A01-A2: dsRed
-  - A1: None
-  - A2: 6F
