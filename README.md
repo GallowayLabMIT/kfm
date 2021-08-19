@@ -154,8 +154,8 @@ $ kfm ./Degron-mGL/2021.07.29_293T_2dpt
 ```
 would work on the following yaml files:
 
-1. `key.yaml`
-2. `2021.07.29_key.yaml`
+1. `./Degron-mGL/2021.07.29_293T_2dpt/key.yaml`
+2. `./Degron-mGL/2021.07.29_293T_2dpt/2021.07.29_key.yaml`
 
 
 Because no yaml path is specified using the `--ypath yaml_path` arg, `kfm` will look in the specified `group_folder_path`. But the following command would only work with the first example because a specific yaml file is specified instead of a general directory to look into:
