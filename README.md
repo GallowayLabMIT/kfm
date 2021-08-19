@@ -21,7 +21,30 @@ pip install kfm
 ```
 
 ## Usage
-???
+`kfm` has a command-line interface:
+
+```
+usage: kfm [-h] [-rev | --opt group_by_options] [--ypath yaml_path] group_folder_path
+```
+
+### Required Arguments
+`group_folder_path`: The path to where the group folder is. Group folders are one level above the XY folders, e.g. `group_folder_path / XY01 / *.tif`
+
+### Optional Arguments
+`-rev`: Include this argument to reverse a move. The `record.json` file generated during the move must be in the specified `group_folder_path`.
+
+`--ypath yaml_path`: The path to where the yaml file is that specifies the well conditions. If no `yaml_path` is given, `kfm` will look in the `group_folder_path`. Conditions **must** be specified as an array called `wells`. Here is an example yaml file:
+
+#### 2021.08.19_key.yaml
+```
+wells:
+  - NIL: A1-C4
+  - DD: B1-C4
+  - RR: C1-C4
+  - puro_ctrl: D1 
+```
+
+Conditions can be overlaid over each other. In the above example, wells `A1-A4` are just `NIL`, but wells `B1-B4` are `NIL_DD`. This make it easy to overlay several conditions in the same well. In addition, single wells can be specified, such as in the example of `D1` and `puro_ctrl`.
 
 ## Developer install
 If you'd like to hack locally on `kfm`, after cloning this repository:
