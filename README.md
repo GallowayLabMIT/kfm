@@ -124,7 +124,19 @@ wells:
   - puro_ctrl: D1 
 ```
 
-Conditions can be overlaid over each other. In the above example, wells `A1-A4` are just `NIL`, but wells `B1-B4` are `NIL_DD`. This make it easy to overlay several conditions in the same well. In addition, single wells can be specified, such as in the example of `D1` and `puro_ctrl`.
+Conditions can be overlaid over each other. In the above example, wells `A1-A4` are just `NIL`, but wells `B1-B4` are `NIL_DD`. This make it easy to overlay several conditions in the same well. In addition, single wells can be specified, such as in the example of `D1` and `puro_ctrl`. This would result in something like this after kfm was used.
+
+
+```
+.
+├── 2021.08.12_NT_reprogram_4dpi
+    ├── NIL
+    ├── NIL.DD
+    ├── NIL.DD.RR
+    ├── puro_ctrl
+    ├── record.json
+    └── unmoved
+```
 
 The yaml file can be called anything, as long as it ends in `.yaml` and is found within the `yaml_path`. `yaml_path` can be the directory where the yaml file is or the actual file name. In the case where it's the directory, `kfm` will use the first `.yaml` file that it finds.
 
