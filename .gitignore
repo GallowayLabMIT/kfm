@@ -143,3 +143,8 @@ dmypy.json
 
 # Cython debug symbols
 cython_debug/
+pip-wheel-metadata/kfm.dist-info/entry_points.txt
+pip-wheel-metadata/kfm.dist-info/LICENSE
+pip-wheel-metadata/kfm.dist-info/METADATA
+pip-wheel-metadata/kfm.dist-info/top_level.txt
+pip-wheel-metadata/kfm.dist-info/zip-safe
