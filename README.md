@@ -4,7 +4,15 @@
 [![PyPI pyversions](https://img.shields.io/pypi/pyversions/kfm.svg)](https://pypi.python.org/pypi/kfm/)
 ![Maintaner](https://img.shields.io/badge/maintainer-nbwang22-blue)
 
- A better way to manage Keyence files.
+kfm is a helper package that helps reorganize Keyence files and folders to make labeling and finding images
+taken by the Keyence easier.
+ 
+Here's an example of what an example Keyence folder looks like before and after using kfm.
+
+<img src="/documentation_images/before_kfm.png" width="550"/>
+
+![Example](/documentation_images/after_kfm.png)
+
  
 ## Install
 This package is on PyPI, so just:
