@@ -1,9 +1,0 @@
-README.md
-setup.py
-Keyence_File_Management.egg-info/PKG-INFO
-Keyence_File_Management.egg-info/SOURCES.txt
-Keyence_File_Management.egg-info/dependency_links.txt
-Keyence_File_Management.egg-info/entry_points.txt
-Keyence_File_Management.egg-info/top_level.txt
-Keyence_File_Management.egg-info/zip-safe
-keyence_file_management/__init__.py

@@ -1,3 +1,0 @@
-[console_scripts]
-kfm = keyence_file_management:entrypoint
-
