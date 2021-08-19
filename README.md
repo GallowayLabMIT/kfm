@@ -9,9 +9,86 @@ taken by the Keyence easier.
  
 Here's an example of what an example Keyence folder looks like before and after using kfm.
 
-<img src="/documentation_images/before_kfm.png" width="550"/>
+```
+.
+├── A01.lnk
+├── B01.lnk
+├── C01.lnk
+├── D01.lnk
+├── E01.lnk
+├── F01.lnk
+├── G01.lnk
+├── XY01
+│   ├── 2021.07.29_293T_4X_XY01_00001_CH2.tif
+│   ├── 2021.07.29_293T_4X_XY01_00001_CH4.tif
+│   ├── 2021.07.29_293T_4X_XY01_00001_Overlay.tif
+│   └── _A01
+├── XY02
+│   ├── 2021.07.29_293T_4X_XY02_00001_CH2.tif
+│   ├── 2021.07.29_293T_4X_XY02_00001_CH4.tif
+│   ├── 2021.07.29_293T_4X_XY02_00001_Overlay.tif
+│   └── _B01
+├── XY03
+│   ├── 2021.07.29_293T_4X_XY03_00001_CH2.tif
+│   ├── 2021.07.29_293T_4X_XY03_00001_CH4.tif
+│   ├── 2021.07.29_293T_4X_XY03_00001_Overlay.tif
+│   └── _C01
+├── XY04
+│   ├── 2021.07.29_293T_4X_XY04_00001_CH2.tif
+│   ├── 2021.07.29_293T_4X_XY04_00001_CH4.tif
+│   ├── 2021.07.29_293T_4X_XY04_00001_Overlay.tif
+│   └── _D01
+├── XY05
+│   ├── 2021.07.29_293T_4X_XY05_00001_CH2.tif
+│   ├── 2021.07.29_293T_4X_XY05_00001_CH4.tif
+│   ├── 2021.07.29_293T_4X_XY05_00001_Overlay.tif
+│   └── _E01
+├── XY06
+│   ├── 2021.07.29_293T_4X_XY06_00001_CH2.tif
+│   ├── 2021.07.29_293T_4X_XY06_00001_CH4.tif
+│   ├── 2021.07.29_293T_4X_XY06_00001_Overlay.tif
+│   └── _F01
+├── XY07
+│   ├── 2021.07.29_293T_4X_XY07_00001_CH2.tif
+│   ├── 2021.07.29_293T_4X_XY07_00001_CH4.tif
+│   ├── 2021.07.29_293T_4X_XY07_00001_Overlay.tif
+│   └── _G01
+└── key.yaml
+```
 
-![Example](/documentation_images/after_kfm.png)
+```
+.
+├── pMXs-eGFP-MODC
+│   ├── 2021.07.29_293T_4X_G01_pMXs-eGFP-MODC_00001_CH2.tif
+│   ├── 2021.07.29_293T_4X_G01_pMXs-eGFP-MODC_00001_CH4.tif
+│   └── 2021.07.29_293T_4X_G01_pMXs-eGFP-MODC_00001_Overlay.tif
+├── pMXs-eGFP-WPRE
+│   ├── 2021.07.29_293T_4X_F01_pMXs-eGFP-WPRE_00001_CH2.tif
+│   ├── 2021.07.29_293T_4X_F01_pMXs-eGFP-WPRE_00001_CH4.tif
+│   └── 2021.07.29_293T_4X_F01_pMXs-eGFP-WPRE_00001_Overlay.tif
+├── pMXs-mGL
+│   ├── 2021.07.29_293T_4X_A01_pMXs-mGL_00001_CH2.tif
+│   ├── 2021.07.29_293T_4X_A01_pMXs-mGL_00001_CH4.tif
+│   └── 2021.07.29_293T_4X_A01_pMXs-mGL_00001_Overlay.tif
+├── pMXs-mGL-MODC
+│   ├── 2021.07.29_293T_4X_B01_pMXs-mGL-MODC_00001_CH2.tif
+│   ├── 2021.07.29_293T_4X_B01_pMXs-mGL-MODC_00001_CH4.tif
+│   └── 2021.07.29_293T_4X_B01_pMXs-mGL-MODC_00001_Overlay.tif
+├── pMXs-mGL-MODC_mut
+│   ├── 2021.07.29_293T_4X_C01_pMXs-mGL-MODC_mut_00001_CH2.tif
+│   ├── 2021.07.29_293T_4X_C01_pMXs-mGL-MODC_mut_00001_CH4.tif
+│   └── 2021.07.29_293T_4X_C01_pMXs-mGL-MODC_mut_00001_Overlay.tif
+├── pMXs-mGL-UbR
+│   ├── 2021.07.29_293T_4X_E01_pMXs-mGL-UbR_00001_CH2.tif
+│   ├── 2021.07.29_293T_4X_E01_pMXs-mGL-UbR_00001_CH4.tif
+│   └── 2021.07.29_293T_4X_E01_pMXs-mGL-UbR_00001_Overlay.tif
+├── pMXs-mGL-Ubi-Y-dK
+│   ├── 2021.07.29_293T_4X_D01_pMXs-mGL-Ubi-Y-dK_00001_CH2.tif
+│   ├── 2021.07.29_293T_4X_D01_pMXs-mGL-Ubi-Y-dK_00001_CH4.tif
+│   └── 2021.07.29_293T_4X_D01_pMXs-mGL-Ubi-Y-dK_00001_Overlay.tif
+├── record.json
+└── unmoved
+```
 
  
 ## Install
@@ -31,7 +108,7 @@ usage: kfm [-h] [-rev | --opt group_by_options] [--ypath yaml_path] group_folder
 `group_folder_path`: The path to where the group folder is. Group folders are one level above the XY folders, e.g. `group_folder_path / XY01 / *.tif`
 
 ### Optional Arguments
-`-rev`: Include this argument to reverse a move. The `record.json` file generated during the move must be in the specified `group_folder_path`.
+`--rev`: Include this argument to reverse a move. The `record.json` file generated during the move must be in the specified `group_folder_path`.
 
 `--opt [group_by_opts]`: Include this argument to specify how folders are nested. This can be provided as a single option (e.g. `'cond'`) or as a list where the order of the list specifies the order of the folder nessting. For exampple, `--opt ['cond', 'T']` nests folders by `conditions / time` point whereas `--opt ['T', 'cond']` nests folders by `time point / condition`. The `record.json` file generated during the move must be in the specified `group_folder_path`. Posssible options are: `['none', 'XY', 'cond', 'T', 'stitch', 'Z', 'CH', 'natural']`. The 2 special ones are `'none'` and `'natural'` which can't be specified with anything else because `'none'` dumps everything in the `group_folder_path` (so no folder nesting can be specified) and `'natural'` specifies `['cond', 'XY']` because they you can see images by condition then by capture point (if you have multiple capture points in the same well). 
 
@@ -55,41 +132,55 @@ The yaml file can be called anything, as long as it ends in `.yaml` and is found
 
 yaml files can be named different things, as long as it ends in the correct `.yaml` extension. Here's another example of a well specification yaml file:
 
-![Example](/documentation_images/key_yaml_ex.png)
+**key.yaml**
+```
+# path: '/Users/Nathan/OneDrive - Massachusetts Institute of Technology/Documents - GallowayLab/instruments/data/keyence/Nathan/Degron-mGL/2021.07.29_293T_2dpt'
+
+wells:
+  - pMXs-mGL: A1-A4
+  - pMXs-mGL-MODC: B1-B4
+  - pMXs-mGL-MODC_mut: C1-C4
+  - pMXs-mGL-Ubi-Y-dK: D1-D4
+  - pMXs-mGL-UbR: E1-E4
+  - pMXs-eGFP-WPRE: F1-F4
+  - pMXs-eGFP-MODC: G1-G4
+```
 
 For yaml file naming, the command:
 
 ```
-$ kfm ~/OneDrive\ -\ Massachusetts\ Institute\ of\ Technology/Documents\ -\ GallowayLab/instruments/data/keyence/Nathan/Reprogram/2021.08.16_NT_SlowFT_test_02/2021.08.16_NT_4dpi 
+$ kfm ./Degron-mGL/2021.07.29_293T_2dpt
 ```
 would work on the following yaml files:
 
-1. 
-![Example](/documentation_images/key_yaml_short_path_ex.png)
-
-2.  
-![Example](/documentation_images/key_yaml_full_path_ex.png)
+1. `key.yaml`
+2. `2021.07.29_key.yaml`
 
 
-Because no yaml path is specified, `kfm` will look in the specified `group_folder_path`. But the following command would only work with the first example because a specific yaml file is specified instead of a general directory to look into:
+Because no yaml path is specified using the `--ypath yaml_path` arg, `kfm` will look in the specified `group_folder_path`. But the following command would only work with the first example because a specific yaml file is specified instead of a general directory to look into:
 
 ```
-$ kfm ~/OneDrive\ -\ Massachusetts\ Institute\ of\ Technology/Documents\ -\ GallowayLab/instruments/data/keyence/Nathan/Reprogram/2021.08.16_NT_SlowFT_test_02/2021.08.16_NT_4dpi/key.yaml
+$ kfm ./Degron-mGL/2021.07.29_293T_2dpt/key.yaml
 ```
 
-The optional `--ypath` arg is useful to reorganize multiple group folders that have the same well layout (e.g. for biological replicates). For example, the following 3 folders could be quickly reorganized with following 3 command:
+The optional `--ypath` arg is useful to reorganize multiple group folders that have the same well layout (e.g. for biological replicates). For example, the following 3 folders could be quickly reorganized with following 3 commands:
 
 ```
-$ kfm ~/OneDrive\ -\ Massachusetts\ Institute\ of\ Technology/Documents\ -\ GallowayLab/instruments/data/keyence/Nathan/Reprogram/2021.08.16_NT_SlowFT_test/2021.08.16_NT_SlowFT_test/2021.08.16_NT_SlowFT_test_01 --ypath /OneDrive\ -\ Massachusetts\ Institute\ of\ Technology/Documents\ -\ GallowayLab/instruments/data/keyence/Nathan/Reprogram/2021.08.16_NT_SlowFT_test
-
-$ kfm ~/OneDrive\ -\ Massachusetts\ Institute\ of\ Technology/Documents\ -\ GallowayLab/instruments/data/keyence/Nathan/Reprogram/2021.08.16_NT_SlowFT_test/2021.08.16_NT_SlowFT_test/2021.08.17_NT_SlowFT_test_02 --ypath /OneDrive\ -\ Massachusetts\ Institute\ of\ Technology/Documents\ -\ GallowayLab/instruments/data/keyence/Nathan/Reprogram/2021.08.16_NT_SlowFT_test
-
-$ kfm ~/OneDrive\ -\ Massachusetts\ Institute\ of\ Technology/Documents\ -\ GallowayLab/instruments/data/keyence/Nathan/Reprogram/2021.08.16_NT_SlowFT_test/2021.08.16_NT_SlowFT_test/2021.08.18_NT_SlowFT_test_03 --ypath /OneDrive\ -\ Massachusetts\ Institute\ of\ Technology/Documents\ -\ GallowayLab/instruments/data/keyence/Nathan/Reprogram/2021.08.16_NT_SlowFT_test
+.
+├── Degron-mGL
+    ├── 2021.07.29_293T_2dpt_01
+    ├── 2021.07.30_293T_2dpt_02
+    ├── 2021.07.31_293T_2dpt_03
+    └── key.yaml
 ```
 
-![Example](/documentation_images/key_yaml_multi_group_folder_ex.png)
+```
+$ kfm ./Degron-mGL/2021.07.29_293T_2dpt_01 --ypath ./Degron-mGL/
 
+$ kfm ./Degron-mGL/2021.07.30_293T_2dpt_02 --ypath ./Degron-mGL/
 
+$ kfm ./Degron-mGL/2021.07.31_293T_2dpt_03 --ypath ./Degron-mGL/
+```
 
 ## Developer install
 If you'd like to hack locally on `kfm`, after cloning this repository:
