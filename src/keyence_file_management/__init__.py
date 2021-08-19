@@ -209,8 +209,8 @@ def move_files(path, wellMap, groupby=['natural']):
     # Check if user provided groupby option is valid
     check_groupby_opt(groupby, groupby_opt, img_type)
     
-    # Check if record.txt exists in the current group folder - if it has the whole move should be completely reversed before attempting new moves
-    if (path/'record.txt').exists():
+    # Check if record.json exists in the current group folder - if it has the whole move should be completely reversed before attempting new moves
+    if (path/'record.json').exists():
         raise RecordExistsError(
             'Files have already been moved. Reverse the move before trying to move files again.')
             
@@ -335,7 +335,7 @@ def rev_move_files(path):
 
     # Print success msg
     print('Move successfully reversed at {}'.format(rev_data['record_time']))
-    # Rename record.txt file
+    # Rename record.json file
     (path/'record.json').rename(path/('{}_rev_{}'.format(rev_data['record_time'], 'record.json')))
 
 """
