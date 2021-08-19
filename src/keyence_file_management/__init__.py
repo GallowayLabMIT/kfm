@@ -9,6 +9,7 @@ import json
 import sys
 import shutil
 
+
 class KfmError(RuntimeError):
     '''
     Rrror thrown for any runtime errors encountered when running kfm
@@ -55,11 +56,12 @@ def match_img_type(path):
     """
 
     # Just check using first tif file found
-    for f in path.rglob('*.tif'):
-        isTimelapse = True if (re.search(r'_T(\d+)_', f.name) != None) else False
-        isZstack = True if (re.search(r'_Z(\d+)_', f.name) != None) else False
-        isStitch = True if (re.search(r'_(\d{5})_', f.name) != None) else False
-        break
+    f = next(path.rglob('*.tif'))
+    # for f in path.rglob('*.tif'):
+    isTimelapse = True if (re.search(r'_T(\d+)_', f.name) != None) else False
+    isZstack = True if (re.search(r'_Z(\d+)_', f.name) != None) else False
+    isStitch = True if (re.search(r'_(\d{5})_', f.name) != None) else False
+
 
     img_type = {'isZstack': isZstack, 'isTimelapse': isTimelapse, 'isStitch': isStitch}
 
@@ -150,24 +152,6 @@ def get_groupby_path(path, groupby, well_info, uniq_well_ID, match):
 
     # Return destination path
     return dest
-
-def rmkdir(dest, new_dirs):
-    '''
-    Recursively make new directories as needed so parents are created first then children and are noted in 
-    new_dirs to make reversing moves easier
-    '''
-
-    # Recursively make parent directories if necessary
-    if not dest.parent.exists():
-        rmkdir(dest.parent, new_dirs)
-
-    # Make dest dir
-    dest.mkdir()
-    # Note what directories were made during the move so if move is reversed
-    # children can be deleted before parent directories
-    new_dirs.append(str(dest))
-    
-    return 
 
 
 def check_groupby_opt(groupby, groupby_opt, img_type):
