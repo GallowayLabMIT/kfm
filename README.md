@@ -134,7 +134,8 @@ yaml files can be named different things, as long as it ends in the correct `.ya
 
 **key.yaml**
 ```
-# path: '/Users/Nathan/OneDrive - Massachusetts Institute of Technology/Documents - GallowayLab/instruments/data/keyence/Nathan/Degron-mGL/2021.07.29_293T_2dpt'
+# path: '/Users/Nathan/OneDrive - Massachusetts Institute of Technology/Documents - GallowayLab/instruments/data \
+#        /keyence/Nathan/Degron-mGL/2021.07.29_293T_2dpt'
 
 wells:
   - pMXs-mGL: A1-A4
