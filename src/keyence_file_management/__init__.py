@@ -413,7 +413,13 @@ def entrypoint():
 
             # Read in 1st well map
             yaml_path = Path(args.yaml_path)
-            f = next(yaml_path.glob('*.yaml'))
+
+            # If the path is the actual yaml file and not just the directory that it's in, read that in
+            # otherwise, read in the first yaml file found in the specified directory.
+            if args.yaml_path[-5:] == '.yaml':
+                f = yaml_path
+            else:
+                f = next(yaml_path.glob('*.yaml'))
             # for f in yaml_path.glob('*.yaml'):
             with open(f) as file:
                 data = yaml.safe_load(file)
