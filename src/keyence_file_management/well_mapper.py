@@ -1,4 +1,6 @@
 from collections.abc import Mapping
+import re
+import itertools
 
 """
 From Chris Johnstone, 2021

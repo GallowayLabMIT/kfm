@@ -7,7 +7,7 @@ import yaml
 import json
 import sys
 import shutil
-from well_mapper import well_mapping
+from . import well_mapper
 
 
 class KfmError(RuntimeError):
@@ -381,15 +381,15 @@ def entrypoint():
     parser = argparse.ArgumentParser(prog='kfm', description='Organize Keyence files')
 
     # Arg to specify group folder
-    parser.add_argument('group_folder_path', metavar='path', nargs='?', default='.',
-                        help='Path to group folder. Default is current folder.')
+    parser.add_argument('group_folder_path', metavar='path',
+                        help='Path to group folder.')
 
     # Arg to specify group by options or reverse the move
     group = parser.add_mutually_exclusive_group()
     group.add_argument('-rev', action='store_true',
                         help='Reverse kfm file move using the record.json file in group folder path'
                         )
-    group.add_argument('-opt', dest='group_by', nargs='*',
+    group.add_argument('--opt', dest='group_by', nargs='*',
                         default=['cond'], choices=['none', 'XY', 'cond', 'T', 'stitch', 'Z', 'CH', 'natural'],
                         help='Grouping will be done in order, e.g. groupby=[\'XY\', \'Z\'] groups into group_folder_path/XY/Z. \
                             Natural grouping is done by condition/XY so you can easily scroll thru images. \
@@ -397,26 +397,28 @@ def entrypoint():
                         )
 
     # Arg to specify path to yaml folder
-    parser.add_argument('-ypath', dest='yaml_path', nargs='?',
+    parser.add_argument('--ypath', dest='yaml_path', nargs='?',
                         help='Path to yaml file containing well descriptions. Without, kfm will use the first yaml file it finds within the group folder.'
                         )
 
     args = parser.parse_args()
 
     try:
-        # If no yaml_path given, look in group folder path
-        if args.yaml_path == None:
-            args.yaml_path = args.group_folder_path
-
-        # Read in 1st well map
-        yaml_path = Path(args.yaml_path)
-        for f in yaml_path.glob('*yaml'):
-            with open(f) as file:
-                data = yaml.safe_load(file)
-                wellMap = well_mapping(data['wells'])
-            break
 
         if args.rev == False:
+
+            # If no yaml_path given, look in group folder path
+            if args.yaml_path == None:
+                args.yaml_path = args.group_folder_path
+
+            # Read in 1st well map
+            yaml_path = Path(args.yaml_path)
+            f = next(yaml_path.glob('*.yaml'))
+            # for f in yaml_path.glob('*.yaml'):
+            with open(f) as file:
+                data = yaml.safe_load(file)
+                wellMap = well_mapper.well_mapping(data['wells'])
+
             # Move files in group folder
             move_files(Path(args.group_folder_path), wellMap, groupby=args.group_by)
         else:
@@ -424,5 +426,9 @@ def entrypoint():
 
     except KfmError as error:
         print('Error: ' + repr(error), file=sys.stderr)
+        sys.exit(1)
+
+    except StopIteration:
+        print('No YAML file found', file=sys.stderr)
         sys.exit(1)
 
