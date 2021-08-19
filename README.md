@@ -64,9 +64,11 @@ $ kfm ~/OneDrive\ -\ Massachusetts\ Institute\ of\ Technology/Documents\ -\ Gall
 ```
 would work on the following yaml files:
 
-1.  ![Example](/documentation_images/key_short_path_ex.png)
+1. 
+![Example](/documentation_images/key_short_path_ex.png)
 
-2.  ![Example](/documentation_images/key_full_path_ex.png)
+2.  
+![Example](/documentation_images/key_full_path_ex.png)
 
 
 Because no yaml path is specified, `kfm` will look in the specified `group_folder_path`. But the following command would only work with the first example because a specific yaml file is specified instead of a general directory to look into:
