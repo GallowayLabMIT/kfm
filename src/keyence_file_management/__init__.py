@@ -9,7 +9,6 @@ import json
 import sys
 import shutil
 
-
 class KfmError(RuntimeError):
     '''
     Rrror thrown for any runtime errors encountered when running kfm
