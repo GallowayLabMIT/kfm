@@ -435,6 +435,6 @@ def entrypoint():
         sys.exit(1)
 
     except StopIteration:
-        print('No YAML file found', file=sys.stderr)
+        print('No YAML file found in {}'.format(args.yaml_path), file=sys.stderr)
         sys.exit(1)
 
