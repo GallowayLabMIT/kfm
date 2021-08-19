@@ -31,7 +31,7 @@ usage: kfm [-h] [-rev | --opt group_by_options] [--ypath yaml_path] group_folder
 `group_folder_path`: The path to where the group folder is. Group folders are one level above the XY folders, e.g. `group_folder_path / XY01 / *.tif`
 
 ### Optional Arguments
-`-rev`: Include this argument to reverse a move. The `record.json` file generated during the move must be in the specified `group_folder_path`.
+`--rev`: Include this argument to reverse a move. The `record.json` file generated during the move must be in the specified `group_folder_path`.
 
 `--opt [group_by_opts]`: Include this argument to specify how folders are nested. This can be provided as a single option (e.g. `'cond'`) or as a list where the order of the list specifies the order of the folder nessting. For exampple, `--opt ['cond', 'T']` nests folders by `conditions / time` point whereas `--opt ['T', 'cond']` nests folders by `time point / condition`. The `record.json` file generated during the move must be in the specified `group_folder_path`. Posssible options are: `['none', 'XY', 'cond', 'T', 'stitch', 'Z', 'CH', 'natural']`. The 2 special ones are `'none'` and `'natural'` which can't be specified with anything else because `'none'` dumps everything in the `group_folder_path` (so no folder nesting can be specified) and `'natural'` specifies `['cond', 'XY']` because they you can see images by condition then by capture point (if you have multiple capture points in the same well). 
 

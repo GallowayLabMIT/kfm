@@ -386,7 +386,7 @@ def entrypoint():
 
     # Arg to specify group by options or reverse the move
     group = parser.add_mutually_exclusive_group()
-    group.add_argument('-rev', action='store_true',
+    group.add_argument('--rev', action='store_true',
                         help='Reverse kfm file move using the record.json file in group folder path'
                         )
     group.add_argument('--opt', dest='group_by', nargs='*',
