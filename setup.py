@@ -5,7 +5,7 @@ with open("README.md", "r", encoding="utf-8") as fh:
 
 setuptools.setup(
     name="kfm",
-    version="1.0.1",
+    version="1.0.2",
     author="Nathan B. Wang",
     author_email="nbwang22@gmail.com",
     description="A better way to manage Keyence-generated microscopy data",
