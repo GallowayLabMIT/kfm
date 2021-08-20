@@ -30,6 +30,6 @@ setuptools.setup(
     ],
     entry_points={
         'console_scripts': [
-            'kfm = keyence_file_management:entrypoint'
+            'kfm = kfm:entrypoint'
     ]}
 )
