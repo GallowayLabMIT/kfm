@@ -12,9 +12,9 @@ setuptools.setup(
     license='MIT',
     long_description=long_description,
     long_description_content_type="text/markdown",
-    url="https://github.com/GallowayLabMIT/keyence_file_management",
+    url="https://github.com/GallowayLabMIT/kfm",
     project_urls={
-        "Bug Tracker": "https://github.com/GallowayLabMIT/keyence_file_management/issues",
+        "Bug Tracker": "https://github.com/GallowayLabMIT/kfm/issues",
     },
     classifiers=[
         "Programming Language :: Python :: 3",
