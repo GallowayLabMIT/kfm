@@ -9,6 +9,8 @@ taken by the Keyence easier.
  
 Here's an example of what an example Keyence folder looks like before and after using kfm.
 
+## Before kfm
+
 ```
 .
 ├── A01.lnk
@@ -55,6 +57,8 @@ Here's an example of what an example Keyence folder looks like before and after 
 │   └── _G01
 └── key.yaml
 ```
+
+## After kfm
 
 ```
 .
