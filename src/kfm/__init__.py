@@ -57,7 +57,7 @@ def match_img_type(path):
 
     # Just check using first tif file found
     f = next(path.rglob('*.tif'))
-    # for f in path.rglob('*.tif'):
+
     isTimelapse = True if (re.search(r'_T(\d+)_', f.name) != None) else False
     isZstack = True if (re.search(r'_Z(\d+)_', f.name) != None) else False
     isStitch = True if (re.search(r'_(\d{5})_', f.name) != None) else False
@@ -171,10 +171,10 @@ def check_groupby_opt(groupby, groupby_opt, img_type):
         if group not in groupby_opt:
             raise(IncorrectGroupbyError(
                 'Cannot group by \'{}\', select from: {}'.format(group, groupby_opt)))
-        if group == 'T' and not img_type['isStitch']:
+        if group == 'T' and not img_type['isTimelapse']:
             raise(IncorrectGroupbyError(
                 'Cannot group by \'{}\' because not timelapse image'.format(group)))
-        if group == 'stitch' and not img_type['isTimelapse']:
+        if group == 'stitch' and not img_type['isStitch']:
             raise(IncorrectGroupbyError(
                 'Cannot group by \'{}\' because not stitch image'.format(group)))
         if group == 'Z' and not img_type['isZstack']:
