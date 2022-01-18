@@ -1,4 +1,3 @@
-import itertools
 from pathlib import Path
 import re
 from datetime import datetime
@@ -23,7 +22,7 @@ class IncorrectWellSpec(KfmError):
 
 class WellNotFound(KfmError):
     '''
-    Runtime error thrown when well does not map to a Keyence XY# folder')
+    Runtime error thrown when well does not map to a Keyence XY# folder'
     '''
 
 
@@ -50,13 +49,36 @@ class RecordDoesNotExistsError(KfmError):
     '''
 
 
+class NoImgsFoundError(KfmError):
+    '''
+    Runtime error thrown when cannot find any jpg or tifs
+    '''
+
+
 def match_img_type(path):
     """
     Given path to group folder, determine image type for the group folder
     """
 
     # Just check using first tif file found
-    f = next(path.rglob('*.tif'))
+    all_tifs = list(path.rglob('*.tif'))
+
+    # Check if there are no tifs
+    if len(all_tifs) == 0:
+        # If no tifs, check for jpegs
+        all_jpgs = list(path.rglob('*.jpg'))
+        if len(all_jpgs) == 0: 
+            raise(NoImgsFoundError(
+                'Cannot find any tif or jpg files in {}'.format(path.resolve())))
+        else:
+            f = all_jpgs[0]
+            filetype = '.jpg'
+            print('WARNING: Use of jpgs is recommended against')
+
+    # If there is a tif file then use that to get metadata
+    else:
+        f = all_tifs[0]
+        filetype = '.tif'
 
     isTimelapse = True if (re.search(r'_T(\d+)_', f.name) != None) else False
     isZstack = True if (re.search(r'_Z(\d+)_', f.name) != None) else False
@@ -74,7 +96,7 @@ def match_img_type(path):
         pattern += r'_(?P<stitch>\d{5})'
     if img_type['isZstack']:
         pattern += r'_(?P<Z>Z{1}\d+)'
-    pattern += r'_(?P<CH>.*).tif'
+    pattern += (r'_(?P<CH>.*)' + filetype)
     
     return (img_type, pattern)
 
@@ -236,8 +258,32 @@ def move_files(path, wellMap, groupby=['natural']):
 
     # Map each XY to a well, e.g. XY01 is A01
     (XYtoWell, XYtoWell_unique) = map_XY_to_well(path)
+
+    # Next, go through mapping each image file to move (anything that is not an image will not be moved)
+
+    # Check if images are tifs
+    all_tifs = list(path.rglob('*.tif'))
+    if len(all_tifs) != 0:
+        filetype = '.tif'
+    # If no tifs, check for jpegs
+    else:
+        all_jpgs = list(path.rglob('*.jpg'))
+        if len(all_jpgs) != 0: 
+            filetype = '.jpg'
+        else:
+            filetype = None
+        
+    # Set image list to tifs or jpgs and raise error if neither
+    if filetype == '.tif':
+        img_list = all_tifs
+    elif filetype == '.jpg':
+        img_list = all_jpgs
+    else:
+        raise(NoImgsFoundError(
+            'Cannot find any tif or jpg files in {}'.format(path.resolve())))
+
     # Recursively go thru all tif files in specified group folder path
-    for f in path.rglob('*.tif'):
+    for f in img_list:
 
         # Extract metadata from img titles
         match = re.search(pattern, f.name)
@@ -419,7 +465,15 @@ def entrypoint():
             if args.yaml_path[-5:] == '.yaml':
                 f = yaml_path
             else:
-                f = next(yaml_path.glob('*.yaml'))
+                
+                try:
+                    f = next(yaml_path.glob('*.yaml'))
+
+                except StopIteration:
+                    print('No YAML file found in {}'.format(
+                        args.yaml_path), file=sys.stderr)
+                    sys.exit(1)
+
             # for f in yaml_path.glob('*.yaml'):
             with open(f) as file:
                 data = yaml.safe_load(file)
@@ -434,7 +488,5 @@ def entrypoint():
         print('Error: ' + repr(error), file=sys.stderr)
         sys.exit(1)
 
-    except StopIteration:
-        print('No YAML file found in {}'.format(args.yaml_path), file=sys.stderr)
-        sys.exit(1)
+    
 
